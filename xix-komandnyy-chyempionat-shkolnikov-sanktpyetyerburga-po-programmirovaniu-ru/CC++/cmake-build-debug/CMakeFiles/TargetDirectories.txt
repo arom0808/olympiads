@@ -1,0 +1,3 @@
+C:/Users/banan/projects/olympiads/xix-komandnyy-chyempionat-shkolnikov-sanktpyetyerburga-po-programmirovaniu-ru/CC++/cmake-build-debug/CMakeFiles/CC__.dir
+C:/Users/banan/projects/olympiads/xix-komandnyy-chyempionat-shkolnikov-sanktpyetyerburga-po-programmirovaniu-ru/CC++/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/banan/projects/olympiads/xix-komandnyy-chyempionat-shkolnikov-sanktpyetyerburga-po-programmirovaniu-ru/CC++/cmake-build-debug/CMakeFiles/rebuild_cache.dir
