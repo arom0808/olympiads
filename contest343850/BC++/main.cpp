@@ -2,38 +2,19 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <ctime>
+#include <iomanip>
 
-const long double EPS = 1e-6;
+const long double EPS = 1e-16;
 
-template<typename T>
-bool is_touch(const std::pair<long double, long double> &point, const T &rad) {
-    if (point.second == 0) {
-        return true;
-    } else if (point.second > 0) {
-        if (point.second - rad <= rad && point.second + rad >= rad) {
-            return true;
-        }
-    } else {
-        if (point.second - rad <= (-rad) && point.second + rad >= (-rad)) {
-            return true;
-        }
-    }
-    return false;
-}
+bool is_check(const std::vector<std::pair<long double, long double>> &points, const long double &rad) {
 
-template<typename T>
-bool is_touch(const std::vector<std::pair<long double, long double>> &points, const T &rad) {
-    for (const std::pair<long double, long double> &point: points) {
-        if (!is_touch<T>(point, rad))
-            return false;
-    }
-    return true;
 }
 
 long double
 ternary_search(const std::vector<std::pair<long double, long double>> &points, const long double &from,
                const long double &to) {
-    if (to - from <= EPS)
+    if (to - from <= EPS/* || clock() < 1.9 * CLOCKS_PER_SEC*/)
         return (from + to) / 2;
     long double a = (from * 2 + to) / 3;
     long double b = (from + to * 2) / 3;
@@ -70,21 +51,6 @@ int main() {
         std::cout << -1;
         return 0;
     }
-    long double max = atop ? std::max_element(points.begin(), points.end(), p_cmp_y)->second : std::min_element(
-            points.begin(), points.end(), p_cmp_y)->second;
-    bool re = false;
-    std::uint64_t radius = 0;
-    for (std::uint64_t i = 0; (atop ? i <= max : i >= max); ++i) {
-        if (is_touch(points, i)) {
-            re = true;
-            radius = i;
-            break;
-        }
-    }
-    if (!re) {
-        std::cout << -1;
-        return 0;
-    }
-    std::cout << ternary_search(points, radius - 1, radius);
+    std::cout << std::setprecision(20) << ternary_search(points, radius - 1, radius);
     return 0;
 }
