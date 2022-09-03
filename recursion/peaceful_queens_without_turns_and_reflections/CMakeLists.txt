@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.21)
+project(peaceful_queens_without_turns_and_reflections)
+
+set(CMAKE_CXX_STANDARD 23)
+
+add_executable(peaceful_queens_without_turns_and_reflections main.cpp)

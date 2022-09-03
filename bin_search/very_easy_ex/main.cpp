@@ -1,25 +1,28 @@
-#include <iostream>
+#include<iostream>
 
-std::uint64_t BinSearchProcess(std::uint64_t N, std::uint64_t x, std::uint64_t y) {
-    if (x > y)
-        std::swap(x, y);
-    std::uint64_t l = 0, r = x * N;
-    while (l != r) {
-        std::uint64_t m = l + (r - l) / 2;
-        std::uint64_t cp_cnt = m / x + (m - x) / y;
-        if (cp_cnt < N)
-            l = m + 1;
-        else if (cp_cnt > N)
-            r = m;
-        else
-            l = r = m;
+std::uint32_t CopiesCount(std::uint32_t seconds, std::uint32_t x, std::uint32_t y) {
+    std::uint32_t cnt = 0;
+    if (seconds >= y) {
+        seconds -= y;
+        cnt += 1;
     }
-    return l;
+    return cnt + seconds / x + seconds / y;
 }
 
 int main() {
-    std::uint64_t N, x, y;
+    std::uint32_t N, x, y;
     std::cin >> N >> x >> y;
-    std::cout << BinSearchProcess(N, x, y);
+    if (x < y)
+        std::swap(x, y);
+    std::uint32_t min = 0, max = N * y;
+    while (max - min > 1) {
+        auto middle = (min + max) / 2;
+        auto value = CopiesCount(middle, x, y);
+        if (value < N)
+            min = middle;
+        else if (value >= N)
+            max = middle;
+    }
+    std::cout << max;
     return 0;
 }

@@ -1,147 +1,60 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <map>
+#include <algorithm>
 
+using Results = std::vector<std::uint32_t>;
+
+inline std::uint32_t cube(const std::uint32_t &v) { return v * v * v; }
+
+bool OnlyCbrtTry(const std::uint32_t &N, std::uint32_t previous_sum, Results &results) {
+    auto cbrt = static_cast<std::uint32_t>(std::floor(std::cbrt(static_cast<double>(N - previous_sum))));
+    for (auto i = cbrt + 1; i >= cbrt; --i) {
+        if (previous_sum + cube(i) == N) {
+            results = {i};
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+RecEnum(std::uint32_t cubes_count, const std::uint32_t &N, std::uint32_t previous_sum, const std::uint32_t &max_cbrt,
+        Results &results) {
+    if (previous_sum >= N || cubes_count == 0)
+        return false;
+    auto oct = OnlyCbrtTry(N, previous_sum, results);
+    if (cubes_count == 1 || oct)
+        return oct;
+    auto max = static_cast<std::uint32_t>(std::ceil(std::cbrt(static_cast<double>(N - previous_sum)))) + 1;
+    for (std::uint32_t i = max, pr_and_cb = previous_sum + cube(i); i > 0; --i, pr_and_cb = previous_sum + cube(i)) {
+        if (pr_and_cb > N)
+            continue;
+        if (pr_and_cb == N) {
+            results = {i};
+            return true;
+        }
+        auto r = RecEnum(cubes_count - 1, N, pr_and_cb, max_cbrt, results);
+        if (r) {
+            results.push_back(i);
+            return true;
+        }
+    }
+    return false;
+}
 
 int main() {
     std::uint32_t N;
     std::cin >> N;
-    auto cbrt = static_cast<std::uint32_t>(powl(N, static_cast<long double>(1) / static_cast<long double>(3)) +
-                                           2);
-    std::vector<std::uint32_t> cubes(cbrt);
-    std::map<std::uint32_t, std::uint32_t> NumbersOnCubes;
-    std::uint32_t c_c = 0;
-    for (std::uint32_t x = 0; x < cbrt; ++x) {
-        c_c = x * x * x;
-        cubes[x] = c_c;
-        NumbersOnCubes.insert({c_c, x});
-    }
-    std::uint32_t sum_cache = 0;
-    for (const auto AC: cubes) {
-        sum_cache = AC;
-        if (sum_cache == N) {
-            std::cout << NumbersOnCubes.at(AC);
-            return 0;
-        }
-        for (const auto BC: cubes) {
-            sum_cache += BC;
-            if (sum_cache == N) {
-                std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                              std::to_string(NumbersOnCubes.at(AC)) + " ")
-                          << NumbersOnCubes.at(BC);
-                return 0;
-            }
-            for (const auto CC: cubes) {
-                sum_cache += CC;
-                if (sum_cache == N) {
-                    std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                                  std::to_string(NumbersOnCubes.at(AC)) + " ")
-                              << (NumbersOnCubes.at(BC) == 0 ? "" :
-                                  std::to_string(NumbersOnCubes.at(BC)) + " ")
-                              << NumbersOnCubes.at(CC);
-                    return 0;
-                }
-                for (const auto DC: cubes) {
-                    sum_cache += DC;
-                    if (sum_cache == N) {
-                        std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                                      std::to_string(NumbersOnCubes.at(AC)) + " ")
-                                  << (NumbersOnCubes.at(BC) == 0 ? "" :
-                                      std::to_string(NumbersOnCubes.at(BC)) + " ")
-                                  << (NumbersOnCubes.at(CC) == 0 ? "" :
-                                      std::to_string(NumbersOnCubes.at(CC)) + " ")
-                                  << NumbersOnCubes.at(DC);
-                        return 0;
-                    }
-                    for (const auto EC: cubes) {
-                        sum_cache += EC;
-                        if (sum_cache == N) {
-                            std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                                          std::to_string(NumbersOnCubes.at(AC)) + " ")
-                                      << (NumbersOnCubes.at(BC) == 0 ? "" :
-                                          std::to_string(NumbersOnCubes.at(BC)) + " ")
-                                      << (NumbersOnCubes.at(CC) == 0 ? "" :
-                                          std::to_string(NumbersOnCubes.at(CC)) + " ")
-                                      << (NumbersOnCubes.at(DC) == 0 ? "" :
-                                          std::to_string(NumbersOnCubes.at(DC)) + " ")
-                                      << NumbersOnCubes.at(EC);
-                            return 0;
-                        }
-                        for (const auto FC: cubes) {
-                            sum_cache += FC;
-                            if (sum_cache == N) {
-                                std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                                              std::to_string(NumbersOnCubes.at(AC)) +
-                                              " ")
-                                          << (NumbersOnCubes.at(BC) == 0 ? "" :
-                                              std::to_string(NumbersOnCubes.at(BC)) +
-                                              " ")
-                                          << (NumbersOnCubes.at(CC) == 0 ? "" :
-                                              std::to_string(NumbersOnCubes.at(CC)) +
-                                              " ")
-                                          << (NumbersOnCubes.at(DC) == 0 ? "" :
-                                              std::to_string(NumbersOnCubes.at(DC)) +
-                                              " ")
-                                          << (NumbersOnCubes.at(EC) == 0 ? "" :
-                                              std::to_string(NumbersOnCubes.at(EC)) +
-                                              " ")
-                                          << NumbersOnCubes.at(FC);
-                                return 0;
-                            }
-                            for (const auto GC: cubes) {
-                                sum_cache += GC;
-                                if (sum_cache == N) {
-                                    std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                                                  std::to_string(NumbersOnCubes.at(AC)) + " ")
-                                              << (NumbersOnCubes.at(BC) == 0 ? "" :
-                                                  std::to_string(NumbersOnCubes.at(BC)) + " ")
-                                              << (NumbersOnCubes.at(CC) == 0 ? "" :
-                                                  std::to_string(NumbersOnCubes.at(CC)) + " ")
-                                              << (NumbersOnCubes.at(DC) == 0 ? "" :
-                                                  std::to_string(NumbersOnCubes.at(DC)) + " ")
-                                              << (NumbersOnCubes.at(EC) == 0 ? "" :
-                                                  std::to_string(NumbersOnCubes.at(EC)) + " ")
-                                              << (NumbersOnCubes.at(FC) == 0 ? "" :
-                                                  std::to_string(NumbersOnCubes.at(FC)) + " ")
-                                              << NumbersOnCubes.at(GC);
-                                    return 0;
-                                }
-                                for (const auto HC: cubes) {
-                                    sum_cache += HC;
-                                    if (sum_cache == N) {
-                                        std::cout << (NumbersOnCubes.at(AC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(AC)) + " ")
-                                                  << (NumbersOnCubes.at(BC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(BC)) + " ")
-                                                  << (NumbersOnCubes.at(CC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(CC)) + " ")
-                                                  << (NumbersOnCubes.at(DC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(DC)) + " ")
-                                                  << (NumbersOnCubes.at(EC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(EC)) + " ")
-                                                  << (NumbersOnCubes.at(FC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(FC)) + " ")
-                                                  << (NumbersOnCubes.at(GC) == 0 ? "" :
-                                                      std::to_string(NumbersOnCubes.at(GC)) + " ")
-                                                  << NumbersOnCubes.at(HC);
-                                        return 0;
-                                    }
-                                    sum_cache -= HC;
-                                }
-                                sum_cache -= GC;
-                            }
-                            sum_cache -= FC;
-                        }
-                        sum_cache -= EC;
-                    }
-                    sum_cache -= DC;
-                }
-                sum_cache -= CC;
-            }
-            sum_cache -= BC;
-        }
-    }
-    std::cout << "IMPOSSIBLE";
+    auto max_cbrt = static_cast<std::uint32_t>(std::ceil(std::cbrt(static_cast<double>(N))));
+    if (cube(max_cbrt) <= N)
+        ++max_cbrt;
+    Results results;
+    auto res = RecEnum(8, N, 0, max_cbrt, results);
+    if (res)
+        for (const auto &v: results)
+            std::cout << v << " ";
+    else
+        std::cout << "IMPOSSIBLE";
     return 0;
 }
