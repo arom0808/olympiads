@@ -30,7 +30,7 @@ bool IsOk(const std::vector<std::vector<color>> &desk, std::uint32_t n, std::uin
             colors[static_cast<std::uint32_t>(desk[y][x + 1]) - 1] = true;
             colors[static_cast<std::uint32_t>(desk[y + 1][x]) - 1] = true;
             for (const bool &col: colors) if (!col) return false;
-            for (bool &color: colors) color = false;
+            for (auto &&color: colors) color = false;
             for (std::uint32_t l_y = y - 1; l_y <= y + 1; ++l_y)
                 for (std::uint32_t l_x = x - 1; l_x <= x + 1; ++l_x)
                     if (l_x != x || l_y != y)
@@ -46,9 +46,6 @@ bool IsOk(const std::vector<std::vector<color>> &desk, std::uint32_t n, std::uin
 int main() {
     std::uint32_t n, m;
     std::cin >> n >> m;
-    if (n == 0 || m == 0) {
-        return 0;
-    }
     std::vector<std::vector<color>> desk(m, std::vector<color>(n, color::not_filled));
     std::vector<color> numbers_pos{static_cast<color>(2u), static_cast<color>(0u), static_cast<color>(3u),
                                    static_cast<color>(1u), static_cast<color>(4u)};
@@ -61,7 +58,9 @@ int main() {
     for (std::uint32_t y = 0; y < m; ++y)
         for (std::uint32_t x = 0; x < n; ++x)
             desk[y][x] = static_cast<color>(static_cast<std::uint32_t>(desk[y][x]) + 1);
+//    auto is_ok = IsOk(desk, n, m);
     PrintDesk(desk, n, m);
-    std::cout << IsOk(desk, n, m);
+//        std::cout << IsOk(desk, n, m);
+//        return 0;
     return 0;
 }
