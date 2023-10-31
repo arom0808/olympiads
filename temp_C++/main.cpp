@@ -1,43 +1,43 @@
-#include<iostream>
-#include<map>
-#include<vector>
-#include<algorithm>
-
-int main() {
-    std::uint64_t n;
-    std::cin >> n;
-    std::map<std::uint64_t, std::uint64_t> c_s;
-    for (std::uint64_t i = 0, x; i < n; ++i) {
-        std::cin >> x;
-        auto it = c_s.find(x);
-        if (it != c_s.end()) ++it->second;
-        else c_s.emplace(x, 1);
-    }
-    std::vector<std::pair<std::uint64_t, std::uint64_t>> counts(c_s.begin(), c_s.end());
-    std::sort(counts.begin(), counts.end(),
-              [](const std::pair<std::uint64_t, std::uint64_t> &a, const std::pair<std::uint64_t, std::uint64_t> &b) {
-                  return a.second < b.second;
-              });
-    std::vector<std::uint64_t> odd_cnt, even_cnt;
-    odd_cnt.reserve(n);
-    even_cnt.reserve(n);
-    for (auto &&[num, cnt]: counts) {
-        if (cnt % 2 == 0) for (std::uint64_t i = 0; i < cnt; ++i) even_cnt.push_back(num);
-        else for (std::uint64_t i = 0; i < cnt; ++i) odd_cnt.push_back(num);
-    }
-    std::vector<std::uint64_t> aaa;
-    aaa.reserve(n);
-    for (auto &&even: even_cnt) aaa.push_back(even);
-    for (auto &&odd: odd_cnt) aaa.push_back(odd);
-    std::uint64_t res = 0, pre_n = n + 1;
-    for (unsigned long long &it: aaa) {
-        if (it != pre_n) {
-            ++res;
-            pre_n = it;
-        }
-    }
-    std::cout << res;
-}
+//#include<iostream>
+//#include<map>
+//#include<vector>
+//#include<algorithm>
+//
+//int main() {
+//    std::uint64_t n;
+//    std::cin >> n;
+//    std::map<std::uint64_t, std::uint64_t> c_s;
+//    for (std::uint64_t i = 0, x; i < n; ++i) {
+//        std::cin >> x;
+//        auto it = c_s.find(x);
+//        if (it != c_s.end()) ++it->second;
+//        else c_s.emplace(x, 1);
+//    }
+//    std::vector<std::pair<std::uint64_t, std::uint64_t>> counts(c_s.begin(), c_s.end());
+//    std::sort(counts.begin(), counts.end(),
+//              [](const std::pair<std::uint64_t, std::uint64_t> &a, const std::pair<std::uint64_t, std::uint64_t> &b) {
+//                  return a.second < b.second;
+//              });
+//    std::vector<std::uint64_t> odd_cnt, even_cnt;
+//    odd_cnt.reserve(n);
+//    even_cnt.reserve(n);
+//    for (auto &&[num, cnt]: counts) {
+//        if (cnt % 2 == 0) for (std::uint64_t i = 0; i < cnt; ++i) even_cnt.push_back(num);
+//        else for (std::uint64_t i = 0; i < cnt; ++i) odd_cnt.push_back(num);
+//    }
+//    std::vector<std::uint64_t> aaa;
+//    aaa.reserve(n);
+//    for (auto &&even: even_cnt) aaa.push_back(even);
+//    for (auto &&odd: odd_cnt) aaa.push_back(odd);
+//    std::uint64_t res = 0, pre_n = n + 1;
+//    for (unsigned long long &it: aaa) {
+//        if (it != pre_n) {
+//            ++res;
+//            pre_n = it;
+//        }
+//    }
+//    std::cout << res;
+//}
 
 //#include<iostream>
 //#include<map>
@@ -432,41 +432,41 @@ int main() {
 //    std::cout << max_power;
 //}
 
-//#include <iostream>
-//#include <deque>
-//
-//struct DequeEl {
-//    std::uint32_t num, last_update;
-//    std::uint64_t count;
-//
-//    DequeEl(std::uint32_t num, std::uint64_t count, std::uint32_t last_update) : num(num), count(count),
-//                                                                                 last_update(last_update) {}
-//};
-//
-//int main() {
-//    std::uint32_t m;
-//    std::cin >> m;
-//    std::deque<DequeEl> deque;
-//    for (std::uint32_t i = 0, t_i, now_update = 0, x; i < m; ++i) {
-//        std::cin >> t_i;
-//        if (t_i == 1) {
-//            std::cin >> x;
-//            deque.emplace_back(x, 1, 0);
-//        } else if (t_i == 2) {
-//            ++now_update;
-//        } else {
-//            auto &now_d_el = deque.front();
-//            if (now_d_el.last_update < now_update) {
-//                now_d_el.count <<= now_update - now_d_el.last_update;
-//                now_d_el.last_update = now_update;
-//            }
-//            std::cout << now_d_el.num << "\n";
-//            if (now_d_el.count == 1) deque.pop_front();
-//            else --now_d_el.count;
-//        }
-//    }
-//    return 0;
-//}
+#include <iostream>
+#include <deque>
+
+struct DequeEl {
+    std::uint32_t num, last_update;
+    std::uint64_t count;
+
+    DequeEl(std::uint32_t num, std::uint64_t count, std::uint32_t last_update) : num(num), count(count),
+                                                                                 last_update(last_update) {}
+};
+
+int main() {
+    std::uint32_t m;
+    std::cin >> m;
+    std::deque<DequeEl> deque;
+    for (std::uint32_t i = 0, t_i, now_update = 0, x; i < m; ++i) {
+        std::cin >> t_i;
+        if (t_i == 1) {
+            std::cin >> x;
+            deque.emplace_back(x, 1, now_update);
+        } else if (t_i == 2) {
+            ++now_update;
+        } else {
+            auto &now_d_el = deque.front();
+            if (now_d_el.last_update < now_update) {
+                now_d_el.count <<= now_update - now_d_el.last_update;
+                now_d_el.last_update = now_update;
+            }
+            std::cout << now_d_el.num << "\n";
+            if (now_d_el.count == 1) deque.pop_front();
+            else --now_d_el.count;
+        }
+    }
+    return 0;
+}
 
 
 //#include <iostream>
