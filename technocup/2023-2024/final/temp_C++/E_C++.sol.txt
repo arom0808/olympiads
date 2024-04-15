@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    uint64_t n, m;
+    cin >> n >> m;
+    vector<uint64_t> a(n);
+    vector<vector<uint64_t>> positions(m);
+    for (uint64_t i = 0; i < n; ++i) {
+        cin >> a[i];
+        positions[--a[i]].push_back(i);
+    }
+    vector<vector<uint64_t>> raw_cost(m, vector<uint64_t>(m));
+    for (auto &row: raw_cost) for (auto &el: row) cin >> el;
+    vector<vector<uint64_t>> block_cost;
+    block_cost.reserve(n);
+    set<uint64_t> t_els;
+    for (uint64_t i = 0; i < n;) {
+        t_els.clear();
+        uint64_t end = i + 1;
+        for (; i < end; ++i) {
+            t_els.insert(a[i]);
+            end = max(end, positions[a[i]].back() + 1);
+        }
+        vector<uint64_t> n_cost(m);
+        for (auto from: t_els)
+            for (uint64_t to = 0; to < m; ++to)
+                n_cost[to] += raw_cost[from][to];
+        block_cost.emplace_back(std::move(n_cost));
+    }
+    uint64_t blocks_cnt = block_cost.size();
+    vector<vector<uint64_t>> dp(blocks_cnt, vector<uint64_t>(m));
+    for (uint64_t i = 0; i < m; ++i) dp[0][i] = block_cost[0][i];
+    for (uint64_t i = 1; i < blocks_cnt; ++i) {
+        uint64_t min_pre_cost = 1e18;
+        for (uint64_t j = 0; j < m; ++j) {
+            if (dp[i - 1][j] < min_pre_cost) min_pre_cost = dp[i - 1][j];
+            dp[i][j] = min_pre_cost + block_cost[i][j];
+        }
+    }
+    uint64_t ans = 1e18;
+    for (auto el: dp.back()) if (el < ans) ans = el;
+    cout << ans;
+}

@@ -1,9 +1,7 @@
-res = set()
-for a in range(1, 8):
-    for b in range(1, 8):
-        for c in range(1, 8):
-            for d in range(1, 8):
-                m = min(a * 1000 + b * 100 + c * 10 + d, b * 1000 + c * 100 + d * 10 + a,
-                        c * 1000 + d * 100 + a * 10 + b, d * 1000 + a * 100 + b * 10 + c)
-                res.add(m)
-print(res)
+a = 1000
+x_1, x_2 = a / 4, a / 2
+x = (x_1 + x_2) / 2
+for i in range(1000):
+    print(x)
+    x, x_1, x_2 = (x + x_1) / 2, x, x_1
+ /

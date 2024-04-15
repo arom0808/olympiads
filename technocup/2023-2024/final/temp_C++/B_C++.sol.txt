@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+inline int64_t strength_for_plus(int64_t a, int64_t b, int64_t c, int64_t d) {
+    if (a > 0) return 0;
+    return ((1 - a) / b + ((1 - a) % b != 0)) * c;
+}
+
+inline int64_t strength_for_minus(int64_t a, int64_t b, int64_t c, int64_t d) {
+    if (a < 0) return 0;
+    return ((a + 1) / b + ((a + 1) % b != 0)) * d;
+}
+
+int main() {
+    uint32_t n;
+    cin >> n;
+    vector<int64_t> a(n), b(n), c(n), d(n);
+    for (auto &el: a) cin >> el;
+    for (auto &el: b) cin >> el;
+    for (auto &el: c) cin >> el;
+    for (auto &el: d) cin >> el;
+    vector<int64_t> dp_plus(n, 0), dp_minus(n, 0);
+    dp_plus[0] = strength_for_plus(a[0], b[0], c[0], d[0]);
+    dp_minus[0] = strength_for_minus(a[0], b[0], c[0], d[0]);
+    for (uint32_t i = 1; i < n; ++i) {
+        dp_plus[i] = min(dp_plus[i - 1] + strength_for_plus(a[i], b[i], c[i], d[i]),
+                         dp_minus[i - 1] + strength_for_minus(a[i], b[i], c[i], d[i]));
+        dp_minus[i] = min(dp_plus[i - 1] + strength_for_minus(a[i], b[i], c[i], d[i]),
+                          dp_minus[i - 1] + strength_for_plus(a[i], b[i], c[i], d[i]));
+    }
+    cout << dp_plus.back();
+}

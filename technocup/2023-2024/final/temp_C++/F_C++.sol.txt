@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+vector<vector<int64_t>> ways;
+vector<int64_t> cs;
+int64_t max_now_res;
+
+int64_t bfs_c(int64_t i, int64_t d, int64_t p = -1) {
+    int64_t now_c = cs[i];
+    for (auto child: ways[i]) if (child != p) now_c += bfs_c(child, d + 1, i);
+    if ((d + 1) * now_c > max_now_res) max_now_res = (d + 1) * now_c;
+    return now_c;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    int64_t n;
+    cin >> n;
+    vector<set<int64_t>> ways_set(n);
+    for (int64_t i = 0, v, u; i + 1 < n; ++i) {
+        cin >> u >> v;
+        ways_set[v - 1].insert(u - 1), ways_set[u - 1].insert(v - 1);
+    }
+    ways.resize(n);
+    for (int64_t i = 0; i < n; ++i) ways[i].assign(ways_set[i].begin(), ways_set[i].end());
+    int64_t q, t;
+    cin >> q >> t;
+    int64_t last_ans = 0;
+    cs.assign(n, 0);
+    for (int64_t i = 0, k; i < q; ++i) {
+        for (int64_t j = 0; j < n; ++j) cs[j] = 0;
+        cin >> k;
+        for (int64_t j = 0; j < k; ++j) {
+            int64_t v, c;
+            cin >> v >> c;
+            if (t != 1) v = (v + last_ans) % (n - 1) + 2;
+            cs[--v] = c;
+        }
+        max_now_res = 0;
+        bfs_c(0, 0);
+        cout << max_now_res << "\n";
+    }
+}

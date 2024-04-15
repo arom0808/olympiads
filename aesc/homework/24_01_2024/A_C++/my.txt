@@ -1,0 +1,50 @@
+
+
+//#include <iostream>
+//#include <vector>
+//#include <iomanip>
+//
+//using namespace std;
+//
+//class RandGen {
+//public:
+//    uint64_t a, b, c, d;
+//
+//    inline uint64_t operator()(uint64_t x1, uint64_t x2) const {
+//        return (a * x2 + b * x1 + c) % d;
+//    }
+//
+//    inline void step(uint64_t &x1, uint64_t &x2) const {
+//        uint64_t temp = (*this)(x1, x2);
+//        x1 = x2, x2 = temp;
+//    }
+//
+//    inline void step2(uint64_t &x1, uint64_t &x2) const {
+//        x1 = (*this)(x1, x2), x2 = (*this)(x2, x1);
+//    }
+//
+//    RandGen(uint64_t a, uint64_t b, uint64_t c, uint64_t d) : a(a), b(b), c(c), d(d) {}
+//};
+//
+//int main() {
+//    uint64_t a, b, c, d, x0, x1;
+//    cin >> a >> b >> c >> d >> x0 >> x1;
+//    RandGen rg(a, b, c, d);
+//    uint64_t px = x0, nx = x1, py = x1, ny = rg(x0, x1), lp = 0, lnp = 0;
+//    while (px != py || nx != ny) rg.step(px, nx), rg.step2(py, ny);
+//    py = px, ny = nx;
+//    do { rg.step(py, ny), ++lp; } while (px != py || nx != ny);
+//    px = py = x0, nx = ny = x1;
+//    for (uint64_t i = 0; i < lp; ++i) rg.step(py, ny);
+//    while (px != py || nx != ny) rg.step(px, nx), rg.step(py, ny), ++lnp;
+//    vector<int64_t> cnts(20, 0);
+//    px = x0, nx = x1;
+//    for (uint32_t i = 0; i < 200; ++i) {
+//        ++cnts[px * 20 / d], ++cnts[nx * 20 / d];
+//        px = rg(px, nx), nx = rg(nx, px);
+//    }
+//    uint64_t q = 0;
+//    for (auto cnt: cnts) q += (cnt - 20) * (cnt - 20);
+//    cout << fixed << setprecision(10) << lp << " " << lnp << " " << static_cast<long double>(q) / 400;
+//    return 0;
+//}
