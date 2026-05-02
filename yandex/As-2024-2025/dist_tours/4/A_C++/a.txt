@@ -1,0 +1,51 @@
+#include <iostream>
+#include <map>
+#include <vector>
+
+using namespace std;
+
+using ll = int64_t;
+constexpr int maxn = 1e5;
+constexpr ll inf = 1e18;
+
+int n, k;
+int arr[maxn];
+ll pf[maxn + 1];
+ll dp[maxn + 1];
+
+void solve() {
+    cin >> n >> k;
+    pf[0] = 0;
+    for (int i = 0; i < n; ++i) cin >> arr[i];
+    for (int i = 0; i < n; ++i) pf[i + 1] = pf[i] + arr[n - i - 1];
+    dp[0] = 0;
+    dp[1] = arr[n - 1];
+    multimap<ll, int> dpm;
+    vector<multimap<ll, int>::iterator> dits(n + 1);
+    dits[0] = dpm.emplace(dp[0], 0);
+    ll minus_num = arr[n - 1] / 2;
+    dits[1] = dpm.emplace(dp[1] - minus_num, 1);
+    for (int i = 2; i <= n; ++i) {
+        ll j = dpm.begin()->second;
+        dp[i] = (pf[i - 1] - pf[j]) / 2 + arr[n - i] + dp[j];
+        minus_num += arr[n - i] / 2;
+        dits[i] = dpm.emplace(dp[i] - minus_num, i);
+        if (i - k - 1 >= 0) dpm.erase(dits[i - k - 1]);
+    }
+    cout << dp[n] << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    // freopen("input.txt","r",stdin);
+    solve();
+#endif
+    return 0;
+}

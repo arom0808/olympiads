@@ -1,0 +1,58 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 1e6 + 10;
+
+ll n, g;
+pair<ll, ll> stations[maxn];
+ll near_less_eq[maxn];
+
+void solve() {
+    ll b, d;
+    cin >> n >> g >> b >> d;
+    for (int i = 0; i < n; ++i) cin >> stations[i].first >> stations[i].second;
+    stations[n++] = {d, 0};
+    sort(stations, stations + n);
+    vector<pair<ll, ll> > st;
+    for (int i = n - 1; i >= 0; --i) {
+        while (!st.empty() && st.back().first > stations[i].second) st.pop_back();
+        if (st.empty()) near_less_eq[i] = n;
+        else near_less_eq[i] = st.back().second;
+        st.emplace_back(stations[i].second, i);
+    }
+    ll ans = 0;
+    ll pos = 0, fuel = b;
+    for (int i = 0; i < n; ++i) {
+        if (stations[i].first - pos > fuel) {
+            cout << "-1\n";
+            return;
+        }
+        if (stations[i].first == d) break;
+        fuel -= stations[i].first - pos;
+        pos = stations[i].first;
+        ll npos = stations[near_less_eq[i]].first;
+        if (npos - pos <= fuel) continue;
+        if (npos - pos <= g) {
+            ans += stations[i].second * (npos - pos - fuel);
+            fuel = npos - pos;
+        } else {
+            ans += stations[i].second * (g - fuel);
+            fuel = g;
+        }
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

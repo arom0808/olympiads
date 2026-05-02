@@ -1,0 +1,109 @@
+#include <iostream>
+#include <array>
+#include <algorithm>
+#include <numeric>
+#include <random>
+#include <set>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 240010;
+
+int n, k;
+
+struct Act {
+    int t, a, b;
+};
+
+Act acts[maxn];
+
+void first_group() {
+    vector<int> cnts(n, 1);
+    vector<vector<bool> > ts(n, vector<bool>(n, false));
+    for (int i = 0; i < n; ++i) ts[i][i] = true;
+    for (int _ = 0; _ < k; ++_) {
+        auto [t,a,b] = acts[_];
+        if (t == 0) {
+            for (int i = 0; i < n; ++i) {
+                if (ts[a][i] == ts[b][i]) continue;
+                ++cnts[i];
+                ts[a][i] = ts[b][i] = true;
+            }
+        } else if (t == 1) {
+            cout << (ts[a][b] ? "yes\n" : "no\n");
+        } else {
+            cout << cnts[a] << "\n";
+        }
+    }
+}
+
+void second_group() {
+    vector<vector<pair<int, int> > > quests(n);
+    for (int i = 0; i < k; ++i) {
+        if (acts[i].t != 1) continue;
+        quests[acts[i].a].emplace_back(i, acts[i].b);
+    }
+    vector<int> pre_merged(n, -1);
+    vector<int> ans(k);
+    vector<bool> cur_root(n);
+    cur_root[0] = true;
+    int merged = 0;
+    for (int i = 0; i < k; ++i) {
+        auto [t,a,b] = acts[i];
+        if (t == 0) {
+            pre_merged[b] = merged;
+            cur_root[b] = true;
+            for (auto [qid, v]: quests[b]) {
+                if (qid < i) ans[qid] = v == b;
+                else ans[qid] = cur_root[v];
+            }
+            ++merged;
+        } else if (t == 1) {
+            if (a == 0) ans[i] = cur_root[b];
+        } else if (t == 2) {
+            if (a == 0) ans[i] = merged + 1;
+            else if (pre_merged[a] == -1) ans[i] = 1;
+            else ans[i] = merged - pre_merged[a] + 1;
+        }
+    }
+    for (int i = 0; i < k; ++i) {
+        if (acts[i].t == 0) continue;
+        if (acts[i].t == 1) cout << (ans[i] ? "yes\n" : "no\n");
+        else if (acts[i].t == 2) cout << ans[i] << "\n";
+    }
+}
+
+void solve() {
+    cin >> n >> k;
+    char c;
+    bool second = true;
+    for (int i = 0; i < k; ++i) {
+        cin >> c;
+        if (c == 'S') {
+            cin >> acts[i].a >> acts[i].b, --acts[i].a, --acts[i].b;
+            acts[i].t = 0;
+            ++k;
+            if (acts[i].a != 0) second = false;
+        } else if (c == 'Q') {
+            cin >> acts[i].a >> acts[i].b, --acts[i].a, --acts[i].b;
+            acts[i].t = 1;
+        } else {
+            cin >> acts[i].a, --acts[i].a;
+            acts[i].t = 2;
+        }
+    }
+    if (n <= 4000) first_group();
+    else if (second) second_group();
+    // second_group();
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

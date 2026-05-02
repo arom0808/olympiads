@@ -1,0 +1,12 @@
+{
+  "filename": "return.db",
+  "things": [
+    "toy",
+    "wallet",
+    "ram",
+    "passport",
+    "phone",
+    "book"
+  ],
+  "least_value": 10
+}

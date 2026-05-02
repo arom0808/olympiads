@@ -1,0 +1,116 @@
+// #ifndef LOCAL
+// #pragma GCC optimize("Ofast")
+// #endif
+
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+using ld = long double;
+using matrix = vector<vector<int> >;
+
+constexpr int maxwp = 1 << 5, mod = 998244353;
+int w;
+
+matrix mult(const matrix &a, const matrix &b) {
+    matrix res(1 << w, vector<int>(1 << w, 0));
+    // for (int i = 0; i < (1 << w); ++i) {
+    //     for (int j = 0; j < (1 << w); ++j) {
+    //         for (int k = 0; k < (1 << w); ++k) {
+    //             res[i][k] = (res[i][k] + 1ll * a[i][j] * b[j][k] % mod) % mod;
+    //         }
+    //     }
+    // }
+    for (int i = 0; i < (1 << w); ++i)
+        for (int j = 0; j < (1 << w); ++j)
+            for (int k = 0; k < (1 << w); ++k)
+                res[i][j] = (res[i][j] + 1ll * a[i][k] * b[k][j] % mod) % mod;
+    return res;
+}
+
+matrix bin_pow(matrix val, int p) {
+    matrix res = val;
+    for (; p; p >>= 1) {
+        if (p & 1) res = mult(res, val);
+        val = mult(val, val);
+    }
+    return res;
+}
+
+// int go[maxwp][maxwp];
+matrix go;
+
+inline bool is_one(int mask, int pos) {
+    return (mask >> pos) & 1;
+}
+
+inline int set_one(int mask, int pos) {
+    return mask | (1 << pos);
+}
+
+void rec_calc_go(int gfrom, int f, int s) {
+    if (f == (1 << w) - 1) {
+        ++go[gfrom][s];
+        return;
+    }
+    int pos = 0;
+    while (is_one(f, pos)) ++pos;
+    if (!is_one(s, pos))
+        rec_calc_go(gfrom, set_one(f, pos), set_one(s, pos));
+    if (pos + 1 < w && !is_one(f, pos + 1))
+        rec_calc_go(gfrom, set_one(set_one(f, pos), pos + 1), s);
+    if (pos + 1 < w && !is_one(f, pos + 1) && !is_one(s, pos))
+        rec_calc_go(gfrom, set_one(set_one(f, pos), pos + 1), set_one(s, pos));
+    if (pos + 1 < w && !is_one(f, pos + 1) && !is_one(s, pos + 1))
+        rec_calc_go(gfrom, set_one(set_one(f, pos), pos + 1), set_one(s, pos + 1));
+    if (pos > 0 && !is_one(s, pos - 1) && !is_one(s, pos))
+        rec_calc_go(gfrom, set_one(f, pos), set_one(set_one(s, pos - 1), pos));
+    if (pos + 1 < w && !is_one(s, pos) && !is_one(s, pos + 1))
+        rec_calc_go(gfrom, set_one(f, pos), set_one(set_one(s, pos), pos + 1));
+}
+
+void calc_go(int from) {
+    rec_calc_go(from, from, 0);
+}
+
+// int cur_dp[maxwp], next_dp[maxwp];
+
+void solve() {
+    int h;
+    cin >> w >> h;
+    go.assign(1 << w, vector<int>(1 << w, 0));
+    for (int i = 0; i < (1 << w); ++i) calc_go(i);
+    // matrix go2(1 << w, vector<int>(1 << w, 0));
+    // for (int i = 0; i < (1 << w); ++i) {
+    //     for (int j = 0; j < (1 << w); ++j) {
+    //         for (int k = 0; k < (1 << w); ++k) {
+    //             go2[i][k] += go[i][j] * go[j][k];
+    //         }
+    //     }
+    // }
+
+    go = bin_pow(go, h - 1);
+    // cur_dp[0] = 1;
+    // for (int i = 0; i < h; ++i) {
+    // for (int j = 0; j < (1 << w); ++j)
+    //     for (int k = 0; k < (1 << w); ++k)
+    //         next_dp[k] = (next_dp[k] + 1ll * cur_dp[j] * go[j][k] % mod) % mod;
+    // swap(cur_dp, next_dp);
+    // for (int j = 0; j < (1 << w); ++j) next_dp[j] = 0;
+    // }
+    cout << go[0][0];
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

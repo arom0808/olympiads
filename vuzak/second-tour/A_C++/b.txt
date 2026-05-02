@@ -1,0 +1,31 @@
+#include <iostream>
+
+using namespace std;
+using ll = long long;
+
+ll ceil(ll a, ll b) {
+    return (a + b - 1) / b;
+}
+
+void solve() {
+    ll n, m, t;
+    cin >> n >> m >> t;
+    ll ans = 0;
+    for (ll x = 1; x <= n; ++x) {
+        ll min_y = ceil(t - x, 2 * x + 1);
+        min_y = std::max<ll>(min_y, 1);
+        ll cnt = m - min_y + 1;
+        if (cnt > 0) ans += cnt;
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

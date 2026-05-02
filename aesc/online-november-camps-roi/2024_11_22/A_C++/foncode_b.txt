@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <deque>
+#include <queue>
+#include <set>
+
+using namespace std;
+
+using ll = int64_t;
+int inf = 1e9;
+
+int colors[100][100];
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    for (int i = 0; i < n; ++i) for (int j = 0; j < n; ++j) colors[i][j] = inf;
+    set<pair<int, pair<int, int> > > deq;
+    for (int i = 0; i < n; ++i) {
+        colors[i][i] = 0;
+        deq.emplace(0, make_pair(i, i));
+        colors[i][n - i - 1] = 0;
+        deq.emplace(0, make_pair(i, n - i - 1));
+    }
+    pair<int, int> dps[4] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    while (!deq.empty()) {
+        auto [c, pos] = *deq.begin();
+        deq.erase(deq.begin());
+        for (auto [dx,dy]: dps) {
+            auto new_pos = make_pair(pos.first + dx, pos.second + dy);
+            if (new_pos.first < 0 || new_pos.first >= n || new_pos.second < 0 || new_pos.second >= n) continue;
+            if (c + 1 < colors[new_pos.first][new_pos.second]) {
+                deq.erase(make_pair(colors[new_pos.first][new_pos.second], new_pos));
+                colors[new_pos.first][new_pos.second] = c + 1;
+                deq.insert(make_pair(colors[new_pos.first][new_pos.second], new_pos));
+            }
+        }
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            cout << static_cast<char>('a' + (colors[i][j] % k));
+        }
+        cout << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

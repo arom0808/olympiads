@@ -1,0 +1,114 @@
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 1000;
+int n, m;
+int table[maxn][maxn];
+int left_block[maxn][maxn], right_block[maxn][maxn], top_block[maxn][maxn], bottom_block[maxn][maxn];
+int comp[maxn][maxn];
+vector<pair<int, int> > comp_verts[maxn * maxn];
+vector<int> comp_vals[maxn * maxn], comp_val_pfs[maxn * maxn];
+int comps_cnt = 0;
+
+void blocks_init() {
+    for (int i = 0; i < n; ++i) {
+        int cb = -1;
+        for (int j = 0; j < m; ++j) {
+            if (table[i][j] == -1) left_block[i][j] = cb = j;
+            else left_block[i][j] = cb;
+        }
+        cb = m;
+        for (int j = m - 1; j >= 0; --j) {
+            if (table[i][j] == -1) right_block[i][j] = cb = j;
+            else right_block[i][j] = cb;
+        }
+    }
+    for (int j = 0; j < m; ++j) {
+        int cb = -1;
+        for (int i = 0; i < n; ++i) {
+            if (table[i][j] == -1) top_block[i][j] = cb = i;
+            else top_block[i][j] = cb;
+        }
+        cb = n;
+        for (int i = n - 1; i >= 0; --i) {
+            if (table[i][j] == -1) bottom_block[i][j] = cb = i;
+            else bottom_block[i][j] = cb;
+        }
+    }
+}
+
+int get_paired_in_row(int i, int j) {
+    return left_block[i][j] + right_block[i][j] - j;
+}
+
+int get_paired_in_col(int i, int j) {
+    return top_block[i][j] + bottom_block[i][j] - i;
+}
+
+void c_dfs(int i, int j, int cid) {
+    comp_verts[cid].emplace_back(i, j);
+    comp_vals[cid].push_back(table[i][j]);
+    comp[i][j] = cid;
+    auto pj = get_paired_in_row(i, j), pi = get_paired_in_col(i, j);
+    if (comp[i][pj] == -1) c_dfs(i, pj, cid);
+    if (comp[pi][j] == -1) c_dfs(pi, j, cid);
+}
+
+int get_best_val(const vector<int> &vals, const vector<int> &pf_vals) {
+    int bv = 0, mdif = 1e9;
+    for (int cv = 0; cv < 10; ++cv) {
+        int i1 = lower_bound(vals.begin(), vals.end(), cv) - vals.begin();
+        int i2 = upper_bound(vals.begin(), vals.end(), cv) - vals.begin();
+        int cdif = cv * i1 - pf_vals[i1] - pf_vals[0] + pf_vals[vals.size()] - pf_vals[i2] - cv * (vals.size() - i2);
+        if (cdif < mdif) bv = cv, mdif = cdif;
+    }
+    return bv;
+}
+
+void solve() {
+    cin >> n >> m;
+    char c;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            cin >> c;
+            if (c == '.') table[i][j] = -1;
+            else table[i][j] = c - '0';
+        }
+    }
+    blocks_init();
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) comp[i][j] = -1;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            if (table[i][j] != -1 && comp[i][j] == -1)
+                c_dfs(i, j, comps_cnt++);
+    for (int cid = 0; cid < comps_cnt; ++cid) {
+        sort(comp_vals[cid].begin(), comp_vals[cid].end());
+        comp_val_pfs[cid].resize(comp_vals[cid].size() + 1, 0);
+        for (int i = 0; i < comp_vals[cid].size(); ++i)
+            comp_val_pfs[cid][i + 1] = comp_val_pfs[cid][i] + comp_vals[cid][i];
+        int cv = get_best_val(comp_vals[cid], comp_val_pfs[cid]);
+        for (auto [i,j]: comp_verts[cid]) table[i][j] = cv;
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            if (table[i][j] == -1) cout << '.';
+            else cout << table[i][j];
+        }
+        cout << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

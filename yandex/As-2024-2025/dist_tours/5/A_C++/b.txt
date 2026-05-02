@@ -1,0 +1,118 @@
+#include <algorithm>
+#include <iostream>
+#include <random>
+#include <list>
+
+using namespace std;
+using ll = int64_t;
+constexpr int maxn = 300;
+int n, m, s;
+bool table[maxn][maxn];
+vector<int> row_prices[maxn][maxn], col_prices[maxn][maxn];
+int row_pf[maxn][maxn + 1], col_pf[maxn][maxn + 1];
+
+int row_cost(int r_id, int start, int finish) {
+    if (start > finish) swap(start, finish);
+    return row_pf[r_id][finish + 1] - row_pf[r_id][start] + finish - start + 1;
+}
+
+int col_cost(int c_id, int start, int finish) {
+    if (start > finish) swap(start, finish);
+    return col_pf[c_id][finish + 1] - col_pf[c_id][start] + finish - start + 1;
+}
+
+int cnt_leq(const vector<int> &vec, int val) {
+    return upper_bound(vec.begin(), vec.end(), val) - vec.begin();
+}
+
+int row_dpp[maxn][maxn + 1], col_dpp[maxn][maxn + 1];
+int row_dpp_pf[maxn][maxn + 2], col_dpp_pf[maxn][maxn + 2];
+
+int seg_cnt(int pos, int len, int cnt_objs) {
+    return std::max(std::min(pos + len - 1, cnt_objs - 1) - std::max(pos - len + 1, 0) - len + 2, 0);
+}
+
+void non_tree_solve() {
+    for (int i = 0; i < n; ++i)
+        for (int len = 1; len <= n; ++len)
+            row_dpp[i][len] = seg_cnt(i, len, n);
+    for (int i = 0; i < m; ++i)
+        for (int len = 1; len <= m; ++len)
+            col_dpp[i][len] = seg_cnt(i, len, m);
+    for (int i = 0; i < n; ++i) {
+        row_dpp_pf[i][0] = row_dpp[i][0];
+        for (int j = 1; j <= n; ++j) row_dpp_pf[i][j] = row_dpp_pf[i][j - 1] + row_dpp[i][j];
+    }
+    for (int i = 0; i < m; ++i) {
+        col_dpp_pf[i][0] = col_dpp[i][0];
+        for (int j = 1; j <= m; ++j) col_dpp_pf[i][j] = col_dpp_pf[i][j - 1] + col_dpp[i][j];
+    }
+    ll ans = 0;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            for (int rlen = 1; rlen <= n && s - rlen + 1 >= 0; ++rlen) {
+                ans += 1ll * row_dpp[i][rlen] * col_dpp_pf[j][std::min(s - rlen + 1, m)];
+            }
+        }
+    }
+    cout << ans << "\n";
+}
+
+void solve() {
+    cin >> n >> m >> s;
+    char c;
+    bool is_tree_exists = false;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            cin >> c, table[i][j] = c == '#', is_tree_exists |= table[i][j];
+    if (!is_tree_exists) {
+        non_tree_solve();
+        return;
+    }
+    for (int i = 0; i < n; ++i) {
+        row_pf[i][0] = 0;
+        for (int j = 0; j < m; ++j) row_pf[i][j + 1] = row_pf[i][j] + table[i][j];
+    }
+    for (int j = 0; j < m; ++j) {
+        col_pf[j][0] = 0;
+        for (int i = 0; i < n; ++i) col_pf[j][i + 1] = col_pf[j][i] + table[i][j];
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            for (int k = j; k < m; ++k) {
+                int ccost = row_cost(i, j, k);
+                for (int l = j; l <= k; ++l) row_prices[i][l].push_back(ccost);
+            }
+        }
+    }
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int k = j; k < n; ++k) {
+                int ccost = col_cost(i, j, k);
+                for (int l = j; l <= k; ++l) col_prices[l][i].push_back(ccost);
+            }
+        }
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            sort(row_prices[i][j].begin(), row_prices[i][j].end());
+            sort(col_prices[i][j].begin(), col_prices[i][j].end());
+        }
+    }
+    ll ans = 0;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            for (auto p1: row_prices[i][j])
+                ans += cnt_leq(col_prices[i][j], s - p1 + 1 + table[i][j]);
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

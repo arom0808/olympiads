@@ -1,2 +1,11 @@
-*cmake-build*
-*idea
+cmake-build/
+cmake-build-debug/
+cmake-build-relwithdebinfo/
+cmake-build-release/
+cmake-build-minsizerel/
+cmake-build-debug-mingw-1220/
+idea/
+.idea/
+venv/
+.venv/
+__pycache__/

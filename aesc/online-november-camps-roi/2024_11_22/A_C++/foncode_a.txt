@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+using ll = int64_t;
+
+vector<pair<int, int> > chocs;
+
+void solve() {
+    pair<int, int> best_res{-1, 0};
+    int cc = 0;
+    chocs.resize(3);
+    for (int i = 0; i < 3; ++i) cin >> chocs[i].first, chocs[i].second = i;
+    sort(chocs.begin(), chocs.end());
+    do {
+        int a = chocs[0].first, b = chocs[1].first, c = chocs[2].first;
+        int d = std::abs(b - c);
+        if (a - d < 0 || ((a - d) & 1)) continue;
+        if (best_res.first == 0) continue;
+        if (a - d == 0) {
+            best_res.first = 0;
+        } else {
+            best_res.first = chocs[0].second + 1, best_res.second = (a - d) / 2;
+            cc = a - best_res.second;
+        }
+    } while (next_permutation(chocs.begin(), chocs.end()));
+    if (best_res.first == -1) cout << "-1\n";
+    else if (best_res.first == 0) cout << "0\n";
+    else cout << best_res.first << "\n" << best_res.second << " " << cc << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

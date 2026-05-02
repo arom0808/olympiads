@@ -1,0 +1,61 @@
+#include <iostream>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+constexpr int maxn = 1e5, maxlen = 1e6 + 10;
+
+int n, m;
+string raw_first_words[maxn], raw_second_words[maxn], all_words[maxn * 2];
+int all_words_cnt;
+char fl[maxn * 2];
+int fws[maxn], sws[maxn];
+char dp[2][maxn * 2];
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) cin >> raw_first_words[i];
+    for (int i = 0; i < m; ++i) cin >> raw_second_words[i];
+    all_words_cnt = merge(raw_first_words, raw_first_words + n,
+                          raw_second_words, raw_second_words + m, all_words) - all_words;
+    all_words_cnt = unique(all_words, all_words + all_words_cnt) - all_words;
+    for (int i = 0; i < all_words_cnt; ++i) fl[i] = all_words[i].front();
+    for (int i = 0, gi = 0; i < n; ++i) {
+        while (all_words[gi] != raw_first_words[i]) ++gi;
+        fws[i] = gi;
+    }
+    for (int i = 0, gi = 0; i < m; ++i) {
+        while (all_words[gi] != raw_second_words[i]) ++gi;
+        sws[i] = gi;
+    }
+    set<int> fwin, swin;
+    for (int i = all_words_cnt - 1; i >= 0; --i) {
+        if (!dp[0][i]) {
+            int fwid = upper_bound(fws, fws + n, i) - fws;
+            dp[0][i] = 1;
+            if (fwid != n && dp[1][fws[fwid]] == 1) fwin.insert(fws[fwid]);
+            if (!fwin.empty() && fl[i] + 1 >= fl[*fwin.begin()]) dp[0][i] = 2;
+        }
+        if (!dp[1][i]) {
+            int swid = upper_bound(sws, sws + m, i) - sws;
+            dp[1][i] = 1;
+            if (swid != m && dp[0][sws[swid]] == 1) swin.insert(sws[swid]);
+            if (!swin.empty() && fl[i] + 1 >= fl[*swin.begin()]) dp[1][i] = 2;
+        }
+    }
+    if (dp[1][fws[0]] == 1) cout << "SUNC\n";
+    else cout << "***\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt","r",stdin);
+#endif
+    solve();
+    return 0;
+}

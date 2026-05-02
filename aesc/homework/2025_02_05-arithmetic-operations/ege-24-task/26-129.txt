@@ -1,0 +1,29 @@
+def main():
+    f = open("input.txt", "r")
+    n = int(f.readline().rstrip("\n"))
+    arr = []
+    for i, tms in enumerate(map(lambda x: map(int, x.rstrip("\n").split(" ")), f.readlines())):
+        a, b = tms
+        arr.append((a, True, i))
+        arr.append((b, False, i))
+    arr.sort()
+    used = [False] * n
+    left = []
+    right = []
+    last_typ = False
+    for tim, typ, i in arr:
+        if used[i]:
+            continue
+        used[i] = True
+        last_typ = typ
+        if typ:
+            right.append(i + 1)
+        else:
+            left.append(i + 1)
+    if last_typ:
+        print(right[-1], len(right) - 1)
+    else:
+        print(left[-1], len(right))
+
+
+main()

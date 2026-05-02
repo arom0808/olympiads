@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = int64_t;
+using ull = uint64_t;
+using ld = long double;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int> > matrix(n, vector<int>(n, 0)), cp_matrix(matrix);
+    for (auto &row: matrix) for (auto &el: row) cin >> el;
+    int alpha = 0, k;
+    cin >> k;
+    for (int i = 0, act; i < k; ++i) {
+        cin >> act;
+        if (act == 1) alpha -= 2;
+        else if (act == 2) alpha += 2;
+        else if (act == 3) --alpha;
+        else ++alpha;
+    }
+    alpha = ((alpha % 8) + 8) % 8;
+    for (; alpha >= 2; alpha -= 2) {
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < n; ++j)
+                cp_matrix[n - j - 1][i] = matrix[i][j];
+        swap(matrix, cp_matrix);
+    }
+    if (!alpha) {
+        ll a1 = 0, a2 = 0;
+        for (int i = 0; i < n; ++i) a1 += matrix[i].front(), a2 += matrix[i].back();
+        cout << a1 << " " << a2 << "\n";
+    } else {
+        cout << matrix.front().front() << " " << matrix.back().back() << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

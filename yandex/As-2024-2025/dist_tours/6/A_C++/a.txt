@@ -1,0 +1,50 @@
+#include <iostream>
+
+using namespace std;
+
+constexpr int maxn = 50, inf = 1e9;
+int n, m;
+int table[maxn][maxn];
+
+void solve() {
+    int k;
+    cin >> n >> m >> k;
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) table[i][j] = inf;
+    for (int _ = 0, x, y, r; _ < k; ++_) {
+        cin >> x >> y >> r, --x, --y;
+        for (int step = 1, dir = 0, cx = x - 1, cy = y, clen = 2; step < n * m * 50; ++step) {
+            if (x >= 0 && x < n && y >= 0 && y < m) table[x][y] = std::min(table[x][y], step);
+            if (x == cx && y == cy) {
+                if (r) --dir;
+                else ++dir;
+                dir = (dir + 4) % 4;
+                if (dir == 0 || dir == 2) ++clen;
+                if (dir == 0) cx = x - clen + 1, cy = y;
+                else if (dir == 1) cx = x, cy = y + clen - 1;
+                else if (dir == 2) cx = x + clen - 1, cy = y;
+                else if (dir == 3) cx = x, cy = y - clen + 1;
+            }
+            if (dir == 0) --x;
+            else if (dir == 1) ++y;
+            else if (dir == 2) ++x;
+            else --y;
+        }
+    }
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) cout << table[i][j] << " ";
+        cout << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

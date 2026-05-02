@@ -1,0 +1,113 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 2e5 + 10;
+constexpr ll inf = 3e18;
+
+int n;
+vector<int> g[maxn];
+ll nums[maxn];
+// ll dp[maxn][2];
+int par[maxn];
+// vector<ll> all_vals;
+
+namespace Stupid {
+    bool par_con[maxn];
+
+    pair<ll, ll> dfs2(int v) {
+        int cc = 0;
+        for (auto u: g[v]) if (par_con[u]) ++cc;
+        pair<ll, ll> ans{inf, -inf};
+        if ((!par_con[v] && cc > 1) || (par_con[v] && cc)) return {0, inf};
+        if (!cc && !par_con[v]) ans.first = std::min(ans.first, nums[v]), ans.second = std::max(ans.second, nums[v]);
+        for (auto u: g[v]) {
+            if (par_con[u]) {
+                ans.first = std::min(ans.first, nums[v] + nums[u]);
+                ans.second = std::max(ans.second, nums[v] + nums[u]);
+            }
+            auto nans = dfs2(u);
+            ans.first = std::min(ans.first, nans.first);
+            ans.second = std::max(ans.second, nans.second);
+        }
+        return ans;
+    }
+}
+
+ll cur_min_val;
+
+void dfs(int v, int p = -1) {
+    par[v] = p;
+    if (p != -1) g[v].erase(find(g[v].begin(), g[v].end(), p));
+    for (auto u: g[v]) dfs(u, v);
+}
+
+// void dfs2(int v) {
+//     dp[v][0] = 0;
+//     if (nums[v] >= cur_min_val) dp[v][1] = nums[v];
+//     else dp[v][1] = inf;
+//     if (g[v].empty()) return;
+//     for (const auto u: g[v]) {
+//         dp[v][0] = std::max(dp[v][0], dp[u][1]);
+//         dp[v][1] = std::max(dp[v][1], dp[u][1]);
+//     }
+//     pair<ll, ll> m1{-inf, -inf}, m2{-inf, -inf};
+//     for (const auto u: g[v]) {
+//         dfs2(u);
+//         pair<ll, ll> cp{dp[u][1], u};
+//         if (cp >= m1) m2 = m1, m1 = cp;
+//         else if (cp >= m2) m2 = cp;
+//     }
+//     for (auto u: g[v]) {
+//         if (nums[v] + nums[u] < cur_min_val) continue;
+//         dp[v][1] = std::min(dp[v][1], std::max(nums[v] + nums[u],
+//                                                std::max(dp[u][0], m1.second != u ? m1.first : m2.first)));
+//     }
+// }
+
+void solve() {
+    cin >> n;
+    for (int i = 1, u, v; i < n; ++i) {
+        cin >> u >> v, --u, --v;
+        g[u].push_back(v), g[v].push_back(u);
+    }
+    for (int i = 0; i < n; ++i) cin >> nums[i];
+    dfs(0);
+    ll ans = inf;
+    for (int mask = 0; mask < (1 << n); ++mask) {
+        for (int i = 0; i < n; ++i) Stupid::par_con[i] = (mask >> i) & 1;
+        auto cans = Stupid::dfs2(0);
+        if (cans == make_pair(inf, -inf)) continue;
+        ans = std::min(ans, cans.second - cans.first);
+    }
+    cout << ans << "\n";
+    // for (int i = 0; i < n; ++i) {
+    //     all_vals.push_back(nums[i]);
+    //     for (int j = i + 1; j < n; ++j) all_vals.push_back(nums[i] + nums[j]);
+    // }
+    // sort(all_vals.begin(), all_vals.end());
+    // all_vals.erase(unique(all_vals.begin(), all_vals.end()), all_vals.end());
+    // ll ans = inf;
+    // for (auto cmv: all_vals) {
+    //     cur_min_val = cmv;
+    //     dfs2(0);
+    //     if (dp[0][1] != inf) ans = std::min(ans, dp[0][1] - cur_min_val);
+    // }
+    // cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

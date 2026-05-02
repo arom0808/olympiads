@@ -1,0 +1,23 @@
+def main():
+    f = open("input.txt", "r")
+    n = int(f.readline().rstrip("\n"))
+    acts = []
+    for s, e in map(lambda x: map(int, x.split(" ")), f.readlines()):
+        acts.append((s, True))
+        acts.append((e + 1, False))
+    acts.sort()
+    ccnt = 0
+    ans = [0, 0]
+    for tim, typ in acts:
+        if typ:
+            ccnt += 1
+        else:
+            ccnt -= 1
+        if ans[0] == ccnt:
+            ans[1] += 1
+        elif ans[0] < ccnt:
+            ans = [ccnt, 1]
+    print(ans[1], ans[0])
+
+
+main()

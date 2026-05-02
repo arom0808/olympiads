@@ -1,0 +1,90 @@
+
+
+
+
+
+
+
+
+
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <list>
+#include <set>
+
+using namespace std;
+
+constexpr int maxn = 2e5;
+int n, m;
+vector<int> raw_xs;
+vector<pair<int, int> > raw_points;
+vector<pair<int, int> > segs[maxn];
+
+// list<pair<int, int> > cur_segs;
+// map<int, list<pair<int, int> >::iterator> csits;
+struct Seg {
+    int y1, y2;
+    int x;
+
+    bool operator<(const Seg &other) const {
+        if (y1 != other.y1) return y1 < other.y1;
+        if (y2 != other.y2) return y2 < other.y2;
+        return x < other.x;
+    }
+};
+
+set<Seg> css;
+int ans = 0;
+
+int get_zip_val(const vector<int> &fzn, int val) {
+    return distance(fzn.begin(), lower_bound(fzn.begin(), fzn.end(), val));
+}
+
+void add_raw_seg(int v, int u) {
+    if (raw_points[v].first != raw_points[u].first) return;
+    auto a = raw_points[v].second, b = raw_points[u].second;
+    if (a > b) swap(a, b);
+    segs[raw_points[v].first].emplace_back(a, b);
+    // seg_its[raw_points[v].first].emplace(a, prev(segs[raw_points[v].first].end()));
+}
+
+
+bool proc_x(int xc) {
+    for (auto cseg: segs[xc]) {
+        bool dels = false;
+        auto it1 = css.upper_bound(Seg(cseg.first, -1, xc));
+        if (it1 != css.begin()) --it1, dels = it1->y2 > cseg.first;
+        if (dels) {
+            int cans = 2e9;
+            while (it1 != css.end() && it1->y1 < cseg.second) {
+
+            }
+        } else {
+            css.emplace(cseg.first, cseg.second, xc).first;
+        }
+    }
+}
+
+void solve() {
+    cin >> n >> m;
+    raw_xs.reserve(n);
+    for (int i = 0; i < n; ++i) cin >> raw_points[i].first >> raw_points[i].second, raw_xs[i] = raw_points[i].first;
+    sort(raw_xs.begin(), raw_xs.end());
+    raw_xs.erase(unique(raw_xs.begin(), raw_xs.end()), raw_xs.end());
+    for (int i = 0; i < n; ++i) raw_points[i].first = get_zip_val(raw_xs, raw_points[i].first);
+    for (int i = 0; i + 1 < n; ++i) add_raw_seg(i, i + 1);
+    add_raw_seg(n - 1, 0);
+    for (int i = 0; i < raw_xs.size(); ++i) proc_x(i);
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

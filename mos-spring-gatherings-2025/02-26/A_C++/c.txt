@@ -1,0 +1,151 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+using ll = long long;
+
+constexpr ll maxn = 10010, inf = 1e9;
+
+struct Tower {
+    ll x, f, h;
+
+    bool operator<(const Tower &t) const {
+        return x < t.x;
+    }
+
+    friend istream &operator>>(istream &s, Tower &t) {
+        s >> t.x >> t.f >> t.h;
+        return s;
+    }
+};
+
+struct Mast {
+    ll x, h;
+
+    bool operator<(const Mast &t) const {
+        return x < t.x;
+    }
+
+    friend istream &operator>>(istream &s, Mast &t) {
+        s >> t.x >> t.h;
+        return s;
+    }
+};
+
+ll n, m, k;
+Tower my_tows[maxn], gor_tows[maxn];
+Mast masts[maxn];
+vector<ll> coords;
+
+ll zip(ll x) {
+    return lower_bound(coords.begin(), coords.end(), x) - coords.begin();
+}
+
+namespace STmax {
+    ll tree[maxn * 2];
+    ll sz;
+
+    void init() {
+        sz = coords.size();
+        for (ll i = 0; i < 2 * sz; ++i) tree[i] = -inf;
+    }
+
+    void set_val(ll pos, ll val) {
+        pos += sz;
+        tree[pos] = val;
+        for (pos >>= 1; pos; pos >>= 1) tree[pos] = std::max(tree[pos << 1], tree[pos << 1 | 1]);
+    }
+
+    ll get_max(ll l, ll r) {
+        l += sz, r += sz;
+        ll ans = -inf;
+        for (; l != r; l >>= 1, r >>= 1) {
+            if (l & 1) ans = std::max(ans, tree[l++]);
+            if (r & 1) ans = std::max(ans, tree[--r]);
+        }
+        return ans;
+    }
+}
+
+ll minh[maxn];
+bool used[maxn];
+
+ll get_ans() {
+    STmax::init();
+    ll fp = inf, lp = -1;
+    for (ll i = 0; i < k; ++i) {
+        if (used[i]) continue;
+        auto [x, h] = masts[i];
+        if (fp == inf) fp = x;
+        lp = x;
+        STmax::set_val(x, h - coords[x]);
+    }
+    for (ll i = 0; i < coords.size(); ++i) {
+        minh[i] = 1;
+        if (lp >= i)
+            minh[i] = std::max(minh[i], STmax::get_max(i, coords.size()) + coords[i] + 1);
+    }
+    STmax::init();
+    for (ll i = 0; i < k; ++i) {
+        if (used[i]) continue;
+        auto [x, h] = masts[i];
+        STmax::set_val(x, h + coords[x]);
+    }
+    for (ll i = 0; i < coords.size(); ++i) {
+        if (fp <= i)
+            minh[i] = std::max(minh[i], STmax::get_max(0, i + 1) - coords[i] + 1);
+    }
+    ll my = 0, gor = 0;
+    for (ll i = 0; i < n; ++i) {
+        my += my_tows[i].f * std::min(my_tows[i].h, minh[my_tows[i].x] - 1);
+    }
+    for (ll i = 0; i < m; ++i) {
+        gor += gor_tows[i].f * std::min(gor_tows[i].h, minh[gor_tows[i].x] - 1);
+    }
+    return my - gor;
+}
+
+
+void solve() {
+    cin >> n >> m >> k;
+    for (ll i = 0; i < n; ++i) cin >> my_tows[i], coords.push_back(my_tows[i].x);
+    for (ll i = 0; i < m; ++i) cin >> gor_tows[i], coords.push_back(gor_tows[i].x);
+    for (ll i = 0; i < k; ++i) cin >> masts[i], coords.push_back(masts[i].x);
+    sort(my_tows, my_tows + n);
+    sort(gor_tows, gor_tows + m);
+    sort(masts, masts + k);
+    sort(coords.begin(), coords.end());
+    coords.erase(unique(coords.begin(), coords.end()), coords.end());
+    for (ll i = 0; i < n; ++i) my_tows[i].x = zip(my_tows[i].x);
+    for (ll i = 0; i < m; ++i) gor_tows[i].x = zip(gor_tows[i].x);
+    for (ll i = 0; i < k; ++i) masts[i].x = zip(masts[i].x);
+    ll ans = -inf;
+    for (ll i = 0; i < k; ++i) {
+        ans = std::max(ans, get_ans());
+        ll mv = -inf, mvid = 0;
+        for (ll j = 0; j < k; ++j) {
+            if (used[j]) continue;
+            auto [x, h] = masts[j];
+            if (h + coords[x] > mv) mv = h + coords[x], mvid = j;
+        }
+        used[mvid] = true;
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    ll t = 1;
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    // cin >> t;
+    while (t--) solve();
+    return 0;
+}

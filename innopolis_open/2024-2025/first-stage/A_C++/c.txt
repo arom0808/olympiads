@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 1e5, maxN = 61e5;
+constexpr ll inf = 1e18;
+
+struct Edge {
+    int to, l, dt;
+};
+
+ll dist[maxN];
+bool used[maxN];
+vector<Edge> g[maxn];
+int n, m;
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) g[i].clear();
+    for (int i = 0; i < 61 * n; ++i) dist[i] = inf;
+    for (int i = 0; i < 61 * n; ++i) used[i] = false;
+    for (int i = 0, u, v, l, dt; i < m; ++i) {
+        cin >> u >> v >> l >> dt, --u, --v;
+        g[u].emplace_back(v, l, dt);
+    }
+    priority_queue<pair<ll, int>, vector<pair<ll, int> >, greater<> > q;
+    dist[30] = 0;
+    q.emplace(0, 30);
+    while (!q.empty()) {
+        int v = q.top().second;
+        q.pop();
+        if (used[v]) continue;
+        used[v] = true;
+        int ct = v % 61 - 30;
+        int gv = v / 61;
+        for (auto [gu,l,dt]: g[gv]) {
+            if (ct + dt < -30 || ct + dt > 30) continue;
+            int u = gu * 61 + ct + dt + 30;
+            if (dist[u] <= dist[v] + l) continue;
+            dist[u] = dist[v] + l;
+            q.emplace(dist[u], u);
+        }
+    }
+    ll min_dist = inf;
+    for (int i = (n - 1) * 61; i < n * 61; ++i) min_dist = std::min(min_dist, dist[i]);
+    if (min_dist == inf) cout << "-1\n";
+    else cout << min_dist << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    int cfmod = 1, t = 1;
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    cfmod = 1;
+#endif
+    if (cfmod) cin >> t;
+    while (t--) solve();
+    return 0;
+}

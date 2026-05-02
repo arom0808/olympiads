@@ -1,0 +1,40 @@
+#include <iostream>
+#include <set>
+
+using namespace std;
+
+constexpr int maxn = 3e5;
+int n, q;
+int pars_cnt[maxn];
+int cnt_1_par = 0;
+set<pair<int, int> > pcs;
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    cin >> n;
+    for (int i = 1, v, u; i < n; ++i) {
+        cin >> v >> u, --v, --u;
+        if (pars_cnt[u] == 1) --cnt_1_par;
+        pars_cnt[u]++;
+        if (pars_cnt[u] == 1) ++cnt_1_par;
+        pcs.emplace(v, u);
+    }
+    cin >> q;
+    if (cnt_1_par == n - 1) cout << "YES\n";
+    else cout << "NO\n";
+    for (int i = 0, a, b; i < q; ++i) {
+        cin >> a >> b, --a, --b;
+        if (!pcs.contains({a, b})) swap(a, b);
+        pcs.erase({a, b});
+        pcs.insert({b, a});
+        if (pars_cnt[a] == 1) --cnt_1_par;
+        pars_cnt[a]++;
+        if (pars_cnt[a] == 1) ++cnt_1_par;
+        if (pars_cnt[b] == 1) --cnt_1_par;
+        pars_cnt[b]--;
+        if (pars_cnt[b] == 1) ++cnt_1_par;
+        if (cnt_1_par == n - 1) cout << "YES\n";
+        else cout << "NO\n";
+    }
+    return 0;
+}

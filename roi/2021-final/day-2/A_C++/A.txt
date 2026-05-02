@@ -1,0 +1,95 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 3e5 + 1;
+constexpr ll inf = 2e18;
+
+struct DPV {
+    ll val = 0;
+    int pre_choice = 0, pre_max = 0;
+
+    DPV() = default;
+
+    DPV(ll val, int pre_choice, int pre_max): val(val), pre_choice(pre_choice), pre_max(pre_max) {
+    }
+
+    void init() {
+        val = -inf;
+        pre_choice = pre_max = -1;
+    }
+
+    bool operator<(const DPV &rhs) const {
+        return val < rhs.val;
+    }
+};
+
+ll vals[26];
+string s;
+DPV dp[maxn][26];
+vector<int> quest_poss;
+
+void solve_test() {
+    cin >> s;
+    reverse(s.begin(), s.end());
+    for (int i = 0; i <= s.size(); ++i) for (int j = 0; j < 26; ++j) dp[i][j].init();
+    for (int i = 0; i < 26; ++i) dp[0][i].val = 0;
+    quest_poss.clear();
+    for (int i = 0; i < s.size(); ++i) {
+        if (s[i] == '?') quest_poss.push_back(i);
+        int scv = 0, fcv = 26;
+        if (s[i] != '?') scv = s[i] - 'A', fcv = scv + 1;
+        for (int cv = scv; cv < fcv; ++cv) {
+            for (int j = 0; j <= cv; ++j) {
+                if (dp[i][j].val == -inf) continue;
+                dp[i + 1][cv] = std::max(dp[i + 1][cv],
+                                         DPV(dp[i][j].val + vals[cv], ((s[i] == '?' ? cv : dp[i][j].pre_choice)), j));
+            }
+            for (int j = cv + 1; j < 26; ++j) {
+                dp[i + 1][j] = std::max(dp[i + 1][j], dp[i + 1][j - 1]);
+                if (dp[i][j].val == -inf) continue;
+                dp[i + 1][j] = std::max(dp[i + 1][j],
+                                        DPV(dp[i][j].val - vals[cv], ((s[i] == '?') ? cv : dp[i][j].pre_choice), j));
+            }
+        }
+    }
+    DPV tp{-inf, -1, -1};
+    for (int i = 0; i < 26; ++i) {
+        if (tp < dp[s.size()][i]) tp = dp[s.size()][i];
+    }
+    int cur_choice = tp.pre_choice, cur_dpm = tp.pre_max;
+    for (int _ = quest_poss.size() - 1; _ >= 0; --_) {
+        int i = quest_poss[_];
+        s[i] = 'A' + cur_choice;
+        cur_choice = dp[i][cur_dpm].pre_choice;
+        cur_dpm = dp[i][cur_dpm].pre_max;
+    }
+    reverse(s.begin(), s.end());
+    cout << tp.val << "\n";
+    cout << s << "\n";
+}
+
+void solve() {
+    for (ll i = 0, v = 1; i < 26; i += 2, v *= 10) {
+        vals[i] = v;
+        vals[i + 1] = v * 5;
+    }
+    int t;
+    cin >> t;
+    while (t--) solve_test();
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt","r",stdin);
+#endif
+    solve();
+    return 0;
+}

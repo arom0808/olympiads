@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = int64_t;
+using ull = uint64_t;
+using ld = long double;
+
+void solve() {
+    vector<bool> allowed(24 * 60 + 1, true);
+    for (int i = 0; i < 9 * 60; ++i) allowed[i] = false;
+    for (int i = 18 * 60; i < allowed.size(); ++i) allowed[i] = false;
+    int n;
+    cin >> n;
+    string temp_str;
+    for (int _ = 0, sh, sm, eh, em; _ < n; ++_) {
+        cin >> temp_str;
+        int tp1 = temp_str.find(':');
+        sh = stoi(temp_str.substr(0, tp1));
+        int tp2 = temp_str.find('-', tp1 + 1);
+        sm = stoi(temp_str.substr(tp1 + 1, tp2 - tp1 - 1));
+        int tp3 = temp_str.find(':', tp2 + 1);
+        eh = stoi(temp_str.substr(tp2 + 1, tp3 - tp2 - 1));
+        em = stoi(temp_str.substr(tp3 + 1));
+        for (int i = sh * 60 + sm; i < eh * 60 + em; ++i) allowed[i] = false;
+    }
+    int can_start = 9 * 60, started = -1, ans = 0;
+    for (int i = 9 * 60; i <= 18 * 60; ++i) {
+        if (!allowed[i]) {
+            if (started != -1) ans += i - started, started = -1, can_start = i + 20;
+        } else {
+            if (started != -1) {
+                if (i - started == 30) ans += i - started, started = -1, can_start = i + 20;
+            } else {
+                if (i >= can_start) started = i;
+            }
+        }
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

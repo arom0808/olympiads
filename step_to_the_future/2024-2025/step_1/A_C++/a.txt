@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = int64_t;
+using ull = uint64_t;
+using ld = long double;
+
+void solve() {
+    int k, n;
+    cin >> k >> n;
+    int mcnt = k / 4;
+    string pre_s = "", now_s;
+    int now_cnt = 0;
+    vector<string> ans;
+    ans.reserve(n);
+    for (int i = 0; i <= n; ++i) {
+        if (i < n) cin >> now_s;
+        else now_s = "";
+        if (pre_s == now_s) ++now_cnt;
+        else {
+            if (now_cnt && now_cnt >= mcnt) ans.push_back(pre_s);
+            now_cnt = 1;
+            pre_s = now_s;
+        }
+    }
+    sort(ans.begin(), ans.end());
+    if (ans.empty()) cout << "NO\n";
+    else for (const auto &el: ans) cout << el << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

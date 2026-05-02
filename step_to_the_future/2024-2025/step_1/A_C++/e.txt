@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
+using namespace std;
+using ll = int64_t;
+using ull = uint64_t;
+using ld = long double;
+
+vector<int> hole_start;
+int x, n;
+vector<pair<int, int> > holes;
+
+vector<int> get_ans(int w, int h) {
+    int pos = 0;
+    vector<int> ans;
+    while (pos < x) {
+        if (hole_start[pos] != -1 && (ans.empty() || ans.back() != hole_start[pos]))
+            ans.push_back(hole_start[pos] - 1);
+        pos += w;
+        swap(w, h);
+    }
+    return ans;
+}
+
+void solve() {
+    cin >> x;
+    x += 200000;
+    hole_start.assign(x, -1);
+    int w, h;
+    cin >> w >> h >> n;
+    holes.resize(n);
+    for (auto &hole: holes) cin >> hole.first >> hole.second, ++hole.first;
+    sort(holes.begin(), holes.end());
+    for (int h_id = 0; h_id < n; ++h_id)
+        for (int i = holes[h_id].first; i + 1 < holes[h_id].first + holes[h_id].second; ++i)
+            hole_start[i] = holes[h_id].first;
+    auto a1 = get_ans(w, h), a2 = get_ans(h, w);
+    vector<int> ans;
+    if (a1.size() < a2.size()) ans = a1;
+    else if (a1.size() > a2.size()) ans = a2;
+    else {
+        if (accumulate(a1.begin(), a1.end(), 0ll) <= accumulate(a2.begin(), a2.end(), 0ll)) ans = a1;
+        else ans = a2;
+    }
+    cout << ans.size() << "\n";
+    for (auto el: ans) cout << el << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

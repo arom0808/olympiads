@@ -1,0 +1,131 @@
+#include <iostream>
+#include <list>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = int64_t;
+constexpr int mod = 1000000007;
+
+char temp_c;
+int temp_digit;
+
+class BigInt {
+public:
+    list<int> plus_digs, minus_digs;
+
+    static void merge_digs(const list<int> &a, const list<int> &b, list<int> &c) {
+        c.clear();
+        if (a.size() + b.size() == 0) return;
+        c.resize(a.size() + b.size());
+        merge(a.begin(), a.end(), b.begin(), b.end(), c.begin());
+        for (auto it1 = c.begin(), it2 = next(it1); it2 != c.end();) {
+            if (*it1 != *it2) {
+                ++it1, ++it2;
+                continue;
+            }
+            auto ins_it = it2;
+            while (ins_it != c.end() && *ins_it == *it2) ++ins_it;
+            c.insert(ins_it, *it1 + 1);
+            ++it1, ++it1, ++it2, ++it2;
+            c.erase(prev(it1, 1)), c.erase(prev(it1, 1));
+        }
+    }
+
+    static bool list_cmp(const list<int> &a, const list<int> &b) {
+        auto it1 = a.rbegin(), it2 = b.rbegin();
+        for (; it1 != a.rend() && it2 != b.rend(); ++it1, ++it2) if (*it1 < *it2) return true;
+        return it2 != b.rend();
+    }
+
+    BigInt operator+(const BigInt &rhs) const {
+        BigInt res;
+        merge_digs(minus_digs, rhs.minus_digs, res.minus_digs);
+        merge_digs(plus_digs, rhs.plus_digs, res.plus_digs);
+        return res;
+    }
+
+    bool operator<(const BigInt &rhs) const {
+        list<int> al, bl;
+        merge_digs(plus_digs, rhs.minus_digs, al);
+        merge_digs(rhs.plus_digs, minus_digs, bl);
+        return list_cmp(al, bl);
+    }
+
+    bool operator>(const BigInt &rhs) const {
+        return rhs < *this;
+    }
+
+    friend istream &operator>>(istream &is, BigInt &bn) {
+        cin >> temp_c >> temp_digit;
+        bn.minus_digs.clear(), bn.plus_digs.clear();
+        if (temp_c == '-') bn.minus_digs.push_back(temp_digit);
+        else bn.plus_digs.push_back(temp_digit);
+        return is;
+    }
+};
+
+constexpr int maxpow = 1e7 + 1;
+constexpr int maxn = 1000;
+BigInt ps[maxn];
+int psv[maxn];
+BigInt k;
+int kv;
+int n;
+BigInt dp1[2], dp2[2];
+int dpv1[2], dpv2[2];
+int tpws[maxpow];
+
+void main_init() {
+    tpws[0] = 1;
+    for (int i = 1; i < maxpow; ++i) tpws[i] = 1ll * tpws[i - 1] * 2 % mod;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        cin >> ps[i];
+        if (!ps[i].plus_digs.empty()) psv[i] = tpws[ps[i].plus_digs.front()];
+        else psv[i] = ((-tpws[ps[i].minus_digs.front()]) % mod + mod) % mod;
+    }
+    cin >> k;
+    if (!k.plus_digs.empty()) kv = tpws[k.plus_digs.front()];
+    else kv = ((-tpws[k.minus_digs.front()]) % mod + mod) % mod;
+    dp1[0] = k;
+    dp1[1] = ps[0];
+    dpv1[0] = kv;
+    dpv1[1] = psv[0];
+    for (int i = 2; i <= n; ++i) {
+        if (auto tv = dp1[1] + k; dp1[0] > tv) {
+            dp2[0] = dp1[0];
+            dpv2[0] = dpv1[0];
+        } else {
+            dp2[0] = tv;
+            dpv2[0] = (dpv1[1] + kv) % mod;
+        }
+        if (dp1[0] > dp1[1]) {
+            dp2[1] = dp1[0] + ps[i - 1];
+            dpv2[1] = (dpv1[0] + psv[i - 1]) % mod;
+        } else {
+            dp2[1] = dp1[1] + ps[i - 1];
+            dpv2[1] = (dpv1[1] + psv[i - 1]) % mod;
+        }
+        swap(dp1, dp2);
+        swap(dpv1, dpv2);
+    }
+    if (dp1[0] > dp1[1]) cout << dpv1[0] << "\n";
+    else cout << dpv1[1] << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    main_init();
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

@@ -1,0 +1,19 @@
+def main():
+    f = open("input.txt", "r")
+    n, m, k = map(int, f.readline().rstrip("\n").split(" "))
+    min_row = [m] * k
+    for row, seat in map(lambda x: map(int, x.split(" ")), f.readlines()):
+        min_row[seat - 1] = min(min_row[seat - 1], row - 1)
+    ans = (0, 0)
+    for seat2 in range(1, k):
+        if min_row[seat2 - 1] == 0 or min_row[seat2] == 0:
+            continue
+        ans = max(ans, (min(min_row[seat2 - 1], min_row[seat2]) - 1, seat2))
+    ans = tuple(map(lambda x: x + 1, ans))
+    print(ans)
+
+
+main()
+# 26-153: 36892 45510
+# 26-154: 52326 635
+# 26-150: 9991 5643

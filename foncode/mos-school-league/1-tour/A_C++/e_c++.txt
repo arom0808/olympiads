@@ -1,0 +1,37 @@
+#include <iostream>
+#include <cstdint>
+
+using namespace std;
+
+const int64_t maxn = 1e4, inf = 1e15;
+int64_t n;
+int64_t c[maxn], dp[maxn + 1], ps[maxn + 1], sum_lower[maxn + 1], cnt_lower[maxn + 1], sum_greater[maxn + 1],
+        cnt_greater[maxn + 1];
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    cin >> n;
+    for (int32_t i = 0; i < n; ++i) cin >> c[i];
+    ps[0] = dp[0] = sum_lower[0] = cnt_lower[0] = sum_greater[0] = cnt_greater[0] = 0;
+    for (int32_t i = 0; i < n; ++i) ps[i + 1] = ps[i] + c[i];
+    for (int32_t i = 1; i <= n; ++i) {
+        for (int64_t j = i - 1; j > 0; --j) {
+            if (c[i - 1] < j) sum_lower[j] += c[i - 1], ++cnt_lower[j];
+            else if (c[i - 1] > j) sum_greater[j] += c[i - 1], ++cnt_greater[j];
+            if (c[i - j - 1] < j) sum_lower[j] -= c[i - j - 1], --cnt_lower[j];
+            else if (c[i - j - 1] > j) sum_greater[j] -= c[i - j - 1], --cnt_greater[j];
+        }
+        sum_lower[i] = cnt_lower[i] = sum_greater[i] = cnt_greater[i] = 0;
+        for (int32_t j = i - 1; j >= 0; --j) {
+            if (c[j] < i) sum_lower[i] += c[j], ++cnt_lower[i];
+            else if (c[j] > i) sum_greater[i] += c[j], ++cnt_greater[i];
+        }
+        dp[i] = inf;
+        for (int64_t j = 1; j <= i; ++j) {
+            int64_t cv = dp[i - j] + (cnt_lower[j] * j - sum_lower[j]) + (sum_greater[j] - cnt_greater[j] * j);
+            if (cv < dp[i]) dp[i] = cv;
+        }
+    }
+    cout << dp[n] << "\n";
+    return 0;
+}

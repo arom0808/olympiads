@@ -1,0 +1,116 @@
+#ifndef LOCAL
+#pragma GCC optimize("Ofast")
+#endif
+
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <deque>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 1e5 + 10;
+
+deque<char> s;
+int sa[maxn], isa[maxn], tsa[maxn];
+int cls[maxn], tcls[maxn];
+int lcp[maxn], cnts[maxn], cnt_pf[maxn];
+
+void calc_sa() {
+    int n = s.size();
+    iota(sa, sa + n, 0);
+    sort(sa, sa + n, [](int a, int b) { return s[a] < s[b]; });
+    int cnt = 1;
+    cls[0] = 0;
+    for (int i = 1; i < n; ++i) {
+        if (s[sa[i]] != s[sa[i - 1]]) ++cnt;
+        cls[i] = cnt - 1;
+    }
+    for (int i = 0; i < n; ++i) isa[sa[i]] = i;
+    for (int k = 0; (1 << k) < n; ++k) {
+        for (int i = 0; i < cnt; ++i) cnts[i] = 0;
+        for (int i = 0; i < n; ++i) ++cnts[cls[i]];
+        cnt_pf[0] = 0;
+        for (int i = 0; i < n; ++i) cnt_pf[i + 1] = cnt_pf[i] + cnts[i];
+        for (int i = 0; i < n; ++i) {
+            tsa[cnt_pf[cls[isa[(sa[i] + (1 << k)) % n]]]++] = sa[i];
+        }
+        swap(tsa, sa);
+        cnt_pf[0] = 0;
+        for (int i = 0; i < n; ++i) cnt_pf[i + 1] = cnt_pf[i] + cnts[i];
+        for (int i = 0; i < n; ++i) {
+            tsa[cnt_pf[cls[isa[sa[i]]]]++] = sa[i];
+        }
+        swap(tsa, sa);
+        tcls[0] = 0;
+        cnt = 1;
+        for (int i = 1; i < n; ++i) {
+            if (cls[isa[sa[i]]] != cls[isa[sa[i - 1]]]
+                || cls[isa[(sa[i] + (1 << k)) % n]] != cls[isa[(sa[i - 1] + (1 << k)) % n]])
+                ++cnt;
+            tcls[i] = cnt - 1;
+        }
+        swap(cls, tcls);
+        for (int i = 0; i < n; ++i) isa[sa[i]] = i;
+    }
+}
+
+void calc_lcp() {
+    int n = s.size();
+    int start_val = 0;
+    for (int i = 0; i < n; ++i) {
+        int pos = isa[i];
+        if (pos == n - 1) continue;
+        lcp[pos] = start_val;
+        int fp = sa[pos], sp = sa[pos + 1];
+        while (fp + lcp[pos] < n && sp + lcp[pos] < n && s[fp + lcp[pos]] == s[sp + lcp[pos]]) ++lcp[pos];
+        start_val = std::max(0, lcp[pos] - 1);
+    }
+}
+
+ll get_dif_substrs_cnt() {
+    ll ans = s.size() * (s.size() - 1) / 2;
+    for (int i = 0; i + 1 < s.size(); ++i) ans -= lcp[i];
+    return ans;
+}
+
+void solve() {
+    string ts;
+    cin >> ts;
+    s.insert(s.begin(), ts.begin(), ts.end());
+    int q;
+    cin >> q;
+    for (auto &c: s) c = c - 'a' + 1;
+    s.push_back('\0');
+    calc_sa();
+    calc_lcp();
+    cout << get_dif_substrs_cnt() << " ";
+    int t;
+    char c;
+    for (int i = 0; i < q; ++i) {
+        cin >> t;
+        if (t == 1) {
+            cin >> c;
+            s.back() = c - 'a' + 1;
+            s.push_back('\0');
+        } else {
+            s.pop_front();
+        }
+        calc_sa();
+        calc_lcp();
+        cout << get_dif_substrs_cnt() << " ";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,128 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+constexpr int maxn = 1e5 + 10;
+char str[maxn], ans[maxn];
+int n;
+vector<int> g[26];
+int mt[maxn];
+int used[maxn];
+int timer = 0;
+
+struct MV {
+    int val, ch, pos;
+
+    bool operator<(const MV &rhs) const {
+        if (val != rhs.val) return val < rhs.val;
+        return ch < rhs.ch;
+    }
+
+    bool operator!=(const MV &rhs) const {
+        return val != rhs.val || ch != rhs.ch;
+    }
+};
+
+namespace ST {
+    pair<MV, MV> tree[maxn * 2];
+
+    void merge(const pair<MV, MV> &a, const pair<MV, MV> &b, pair<MV, MV> &c) {
+        c.first = std::min(a.first, b.first);
+        c.second = std::min(a.second, b.second);
+        if (c.first != a.first && a.first < c.second) c.second = a.first;
+        else if (c.first != b.first && b.first < c.second) c.second = b.first;
+    }
+
+    pair<MV, MV> merge(const pair<MV, MV> &a, const pair<MV, MV> &b) {
+        pair<MV, MV> c;
+        merge(a, b, c);
+        return c;
+    }
+
+    void init() {
+        for (int i = 0; i < n; ++i) {
+            tree[i + n].first = MV(-1, str[i], i);
+            tree[i + n].second = MV(1e9, 26, n);
+        }
+        for (int i = n - 1; i; --i) merge(tree[i << 1], tree[i << 1 | 1], tree[i]);
+    }
+
+    pair<MV, MV> get_min(int l, int r) {
+        l += n, r += n;
+        pair<MV, MV> ans(MV(1e9, 1e9, 1e9), MV(1e9, 1e9, 1e9));
+        while (l != r) {
+            if (l & 1) ans = merge(ans, tree[l++]);
+            if (r & 1) ans = merge(ans, tree[--r]);
+            l >>= 1, r >>= 1;
+        }
+        return ans;
+    }
+
+    void set_val(int pos, int val) {
+        pos += n;
+        tree[pos].first = MV(val, str[pos], pos);
+        for (pos >>= 1; pos; pos >>= 1) merge(tree[pos << 1], tree[pos << 1 | 1], tree[pos]);
+    }
+}
+
+bool dfs(int v) {
+    if (used[v] == timer) return false;
+    used[v] = timer;
+    auto stmins = ST::get_min(0, n);
+    if (stmins.first.ch != str[v] && stmins.first.val == -1) {
+        int u = stmins.first.pos;
+        if (mt[u] == -1) {
+            mt[u] = v;
+            ST::set_val(u, v);
+            return true;
+        }
+    }
+    if (stmins.second.ch != str[v] && stmins.second.val == -1) {
+        int u = stmins.second.pos;
+        if (mt[u] == -1) {
+            mt[u] = v;
+            ST::set_val(u, v);
+            return true;
+        }
+    }
+    for (auto u: g[str[v]]) {
+        if (dfs(mt[u])) {
+            mt[u] = v;
+            ST::set_val(u, v);
+            return true;
+        }
+    }
+    return false;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        cin >> str[i], str[i] -= 'a';
+        for (int j = 0; j < 26; ++j) if (j != str[i]) g[j].push_back(i);
+    }
+    for (int i = 0; i < n; ++i) mt[i] = -1;
+    ST::init();
+    ++timer;
+    for (int i = 0; i < n; ++i) {
+        if (!dfs(i)) {
+            cout << "Impossible\n";
+            return;
+        }
+        ++timer;
+    }
+    for (int i = 0; i < n; ++i) cout << static_cast<char>('a' + str[mt[i]]);
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

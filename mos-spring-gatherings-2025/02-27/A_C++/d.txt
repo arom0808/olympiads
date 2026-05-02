@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int maxn = 2e5 + 10;
+
+int n;
+int p[maxn];
+vector<int> tps[maxn];
+int used[maxn];
+int timer = 0;
+
+bool check_way(int v, int to) {
+    ++timer;
+    while (v != to && used[v] != timer) {
+        used[v] = timer;
+        v = p[v];
+    }
+    return v == to;
+}
+
+void add_way(int v, int to) {
+    int t = 0;
+    while (v != to) tps[v].push_back(t++), v = p[v];
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> p[i], --p[i];
+    int m;
+    cin >> m;
+    int ans = 1;
+    for (int i = 0, a, b; i < m; ++i) {
+        cin >> a >> b, --a, --b;
+        ans = std::max(ans, (a - b + n) % n);
+    }
+    cout << ans << "\n";
+    // for (int i = 0; i < n; ++i) tps[i].clear();
+    // for (int i = 0; i < n; ++i) used[i] = 0;
+    // timer = 1;
+    // int m;
+    // cin >> m;
+    // for (int i = 0, a, b; i < m; ++i) {
+    //     cin >> a >> b, --a, --b;
+    //     if (!check_way(a, b)) {
+    //         cout << "-1\n";
+    //         return;
+    //     }
+    //     add_way(a, b);
+    // }
+    // int ans = 0;
+    // for (int i = 0; i < n; ++i) {
+    //     sort(tps[i].begin(), tps[i].end());
+    //     int d = 0;
+    //     for (auto t: tps[i]) {
+    //         if (d < t) d = t + 1;
+    //         else ++d;
+    //     }
+    //     ans = std::max(ans, d);
+    // }
+    // cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    int t = 1;
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+    cin >> t;
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    while (t--) solve();
+    return 0;
+}

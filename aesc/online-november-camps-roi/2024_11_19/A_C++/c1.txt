@@ -1,0 +1,127 @@
+#pragma GCC optimize("Ofast")
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 1e5, block_size = 300;
+int n, q, edges_size;
+vector<int> g[maxn];
+vector<int> g_sz_pf[maxn];
+map<pair<int, int>, int> edge_ids;
+pair<int, int> edges[maxn * 2];
+ll vert_paths_cnt[maxn];
+ll edge_paths_cnt[maxn * 2];
+ll vpc_pf[maxn + 1];
+ll epc_pf[maxn * 2 + 1];
+
+ll count_edge_path(int eid) {
+    if (edge_paths_cnt[eid] != -1) return edge_paths_cnt[eid];
+    int from = edges[eid].first, to = edges[eid].second;
+    if (g[to].size() == 1) return edge_paths_cnt[eid] = 1;
+    if (vert_paths_cnt[to] != -1)
+        return edge_paths_cnt[eid] = vert_paths_cnt[to] - edge_paths_cnt[edge_ids[{to, from}]];
+    ll tvpc = 1;
+    for (auto u: g[to]) {
+        if (u == from) continue;
+        tvpc += count_edge_path(edge_ids[{to, u}]);
+    }
+    edge_paths_cnt[eid] = tvpc;
+    vert_paths_cnt[to] = tvpc + count_edge_path(edge_ids[{to, from}]);
+    return edge_paths_cnt[eid];
+}
+
+vector<int> cur_way;
+
+void make_steps(ll k) {
+    int pid = cur_way.size() - 2, vid = cur_way.size() - 1;
+    int p = pid >= 0 ? cur_way[pid] : -1, v = vid >= 0 ? cur_way[vid] : -1;
+    while (v != -1 && k > vert_paths_cnt[v] - (p == -1 ? 0 : edge_paths_cnt[edge_ids[{v, p}]]) - 1) {
+        if (p == -1) {
+            k += vpc_pf[v];
+            v = -1;
+            cur_way.pop_back();
+            break;
+        }
+        int fid = lower_bound(begin(edges), begin(edges) + edges_size, make_pair(p, 0)) - begin(edges);
+        int sid = lower_bound(begin(edges), begin(edges) + edges_size, make_pair(p, v)) - begin(edges);
+        ll fdk = epc_pf[sid] - epc_pf[fid];
+        int pp = pid - 1 >= 0 ? cur_way[pid - 1] : -1;
+        if (pp != -1 && make_pair(p, pp) <= edges[sid])
+            fdk = epc_pf[sid] - epc_pf[fid] - edge_paths_cnt[edge_ids[{p, pp}]];
+        k += fdk + 1;
+        --pid, --vid;
+        p = pid >= 0 ? cur_way[pid] : -1, v = vid >= 0 ? cur_way[vid] : -1;
+        cur_way.pop_back();
+    }
+    if (cur_way.empty()) {
+        p = -1;
+        v = upper_bound(begin(vpc_pf), begin(vpc_pf) + n + 1, k) - begin(vpc_pf) - 1;
+        k -= vpc_pf[v];
+        cur_way.push_back(v);
+    }
+    while (k) {
+        int sid = lower_bound(begin(edges), begin(edges) + edges_size, make_pair(v, 0)) - begin(edges);
+        int fid = lower_bound(begin(epc_pf), begin(epc_pf) + edges_size + 1, epc_pf[sid] + k) - begin(epc_pf) - 1;
+        ll fdk = epc_pf[fid] - epc_pf[sid];
+        if (p != -1 && make_pair(v, p) <= edges[fid]) {
+            fid = lower_bound(begin(epc_pf), begin(epc_pf) + edges_size + 1,
+                              epc_pf[sid] + k + edge_paths_cnt[edge_ids[{v, p}]]) - begin(epc_pf) - 1;
+            fdk = epc_pf[fid] - epc_pf[sid] - edge_paths_cnt[edge_ids[{v, p}]];
+        }
+        k -= fdk + 1;
+        p = v, v = edges[fid].second;
+        cur_way.push_back(v);
+    }
+}
+
+void solve() {
+    cin >> n >> q;
+    edges_size = (n - 1) * 2;
+    for (int i = 0, u, v; i + 1 < n; ++i) {
+        cin >> u >> v, --u, --v;
+        g[u].push_back(v), g[v].push_back(u);
+        edges[i * 2] = make_pair(u, v), edges[i * 2 + 1] = make_pair(v, u);
+    }
+    for (int i = 0; i < n; ++i) sort(g[i].begin(), g[i].end());
+    sort(begin(edges), begin(edges) + edges_size);
+    for (int i = 0; i < edges_size; ++i) edge_ids[edges[i]] = i;
+    for (int i = 0; i < n; ++i) vert_paths_cnt[i] = -1;
+    for (int i = 0; i < edges_size; ++i) edge_paths_cnt[i] = -1;
+    for (int i = 0; i < edges_size; ++i) count_edge_path(i);
+    epc_pf[0] = 0;
+    for (int i = 0; i < edges_size; ++i) epc_pf[i + 1] = epc_pf[i] + edge_paths_cnt[i];
+    for (int v = 0; v < n; ++v) {
+        if (vert_paths_cnt[v] != -1) continue;
+        vert_paths_cnt[v] = 1;
+        for (auto u: g[v]) vert_paths_cnt[v] += edge_paths_cnt[edge_ids[{v, u}]];
+    }
+    vpc_pf[0] = 0;
+    for (int i = 0; i < n; ++i) vpc_pf[i + 1] = vpc_pf[i] + vert_paths_cnt[i];
+    vector<pair<ll, int> > ques(q);
+    for (int i = 0; i < q; ++i) cin >> ques[i].first, --ques[i].first, ques[i].second = i;
+    sort(ques.begin(), ques.end());
+    vector<pair<int, int> > ans(q);
+    cur_way.push_back(0);
+    make_steps(ques.front().first);
+    ans[ques.front().second] = {cur_way.front(), cur_way.back()};
+    for (int i = 1; i < q; ++i) {
+        make_steps(ques[i].first - ques[i - 1].first);
+        ans[ques[i].second] = {cur_way.front(), cur_way.back()};
+    }
+    for (auto ee: ans) cout << ee.first + 1 << " " << ee.second + 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+using ll = int64_t;
+constexpr ll maxn = 5000;
+constexpr ll inf = 1e13;
+
+ll n, gl;
+ll dp[maxn + 1][maxn + 1];
+ll arr[maxn];
+ll num_len[maxn];
+ll sls[maxn + 1][maxn + 1];
+
+ll get_num_len(ll num) {
+    if (!num) return 1;
+    ll len = 0;
+    while (num) ++len, num /= 10;
+    return len;
+}
+
+// [from, to)
+pair<ll, ll> seg_len_cnt(ll from, ll to) {
+    if (to - from == 1) return make_pair(num_len[from], 0);
+    return make_pair(num_len[from] + num_len[to - 1] + 2, arr[to - 1] - arr[from] + 1 - to + from);
+}
+
+void seg_to_string(ll from, ll to, string &str) {
+    str.clear();
+    if (to - from == 1) str = std::to_string(arr[from]);
+    else {
+        str += std::to_string(arr[from]);
+        str += "..";
+        str += std::to_string(arr[to - 1]);
+    }
+}
+
+void solve() {
+    cin >> gl >> n;
+    gl -= 2;
+    for (ll i = 0; i < n; ++i) cin >> arr[i];
+    sort(begin(arr), next(begin(arr), n));
+    for (ll i = 0; i < n; ++i) num_len[i] = get_num_len(arr[i]);
+    for (ll i = 0; i <= gl; ++i) dp[0][i] = 0, sls[0][i] = 0;
+    for (ll full_len = 1; full_len <= n; ++full_len) {
+        for (ll l = 0; l <= gl; ++l) {
+            dp[full_len][l] = inf;
+            for (ll suf_len = full_len; suf_len > 0; --suf_len) {
+                auto suf_len_cnt = seg_len_cnt(full_len - suf_len, full_len);
+                if (suf_len_cnt.first > l) {
+                    if (suf_len > 1) suf_len = 2; // for check suf_len == 1
+                    // continue;
+                }
+                ll cr = suf_len_cnt.second;
+                if (suf_len != full_len) {
+                    if (l - suf_len_cnt.first - 1 < 0) cr += inf;
+                    else cr += dp[full_len - suf_len][l - suf_len_cnt.first - 1];
+                }
+                if (cr < dp[full_len][l]) {
+                    dp[full_len][l] = cr;
+                    sls[full_len][l] = suf_len;
+                }
+            }
+        }
+    }
+    vector<string> anss;
+    ll csi = n, ccl = gl;
+    while (csi > 0) {
+        anss.emplace_back();
+        seg_to_string(csi - sls[csi][ccl], csi, anss.back());
+        csi -= sls[csi][ccl], ccl -= anss.back().size() + 1;
+    }
+    reverse(begin(anss), end(anss));
+    cout << "[";
+    for (ll i = 0; i < anss.size(); ++i) {
+        cout << anss[i];
+        if (i + 1 < anss.size()) cout << ",";
+    }
+    cout << "]\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+    ll t;
+    cin >> t;
+    while (t--) solve();
+#else
+    // freopen("input.txt","r",stdin);
+    solve();
+#endif
+    return 0;
+}

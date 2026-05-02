@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+using ll = __int128_t;
+
+const int maxn = 1e5;
+__int128 arr[maxn + 1];
+
+void solve() {
+    int64_t _n, _k, _b, _s;
+    cin >> _n >> _k >> _b >> _s;
+    ll n = _n, k = _k, b = _b, s = _s;
+    auto et_c = b / n;
+    auto last_c = b - et_c * (n - 1);
+    auto min_s = (n - 1) * et_c * k + last_c * k;
+    auto max_s = (n - 1) * (et_c * k + k - 1) + last_c * k + k - 1;
+    if (s < min_s || s > max_s) {
+        cout << "-1\n";
+        return;
+    }
+    for (int i = 0; i + 1 < n; ++i) arr[i] = et_c * k;
+    arr[n - 1] = last_c * k;
+    auto cs = min_s;
+    for (int i = 0; i < n && cs < s; ++i) {
+        auto add_val = std::min(s - cs, k - 1);
+        arr[i] += add_val;
+        cs += add_val;
+    }
+    for (int i = 0; i < n; ++i) cout << static_cast<int64_t>(arr[i]) << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

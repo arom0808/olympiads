@@ -1,0 +1,166 @@
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <set>
+
+using namespace std;
+using ll = long long;
+
+constexpr ll maxn = 2e5 + 10, inf = 6e9;
+ll n;
+
+struct Ship {
+    ll x, y, d, id;
+
+    friend istream &operator>>(istream &is, Ship &ship) {
+        char c;
+        is >> ship.x >> ship.y >> c;
+        if (c == 'N') ship.d = 2;
+        else if (c == 'E') ship.d = 1;
+        else if (c == 'S') ship.d = 0;
+        else ship.d = 3;
+        return is;
+    }
+
+    bool operator<(const Ship &other) const {
+        if (x != other.x) return x < other.x;
+        return y < other.y;
+    }
+};
+
+Ship ships[maxn];
+bool dead[maxn];
+
+ll crash_time(int a, int b) {
+    if (ships[a].d == 0) {
+        if (ships[b].d == 2 && ships[a].x == ships[b].x && ships[a].y < ships[b].y) return ships[b].y - ships[a].y;
+        if (ships[b].d == 1 && ships[a].x + ships[a].y == ships[b].x + ships[b].y && ships[b].x < ships[a].x)
+            return (ships[a].x - ships[b].x) * 2;
+        if (ships[b].d == 3 && ships[a].x - ships[a].y == ships[b].x - ships[b].y && ships[b].x > ships[a].x)
+            return (ships[b].x - ships[a].x) * 2;
+    } else if (ships[a].d == 1) {
+        if (ships[b].d == 3 && ships[a].y == ships[b].y && ships[a].x < ships[b].x) return ships[b].x - ships[a].x;
+        if (ships[b].d == 0 && ships[a].x + ships[a].y == ships[b].x + ships[b].y && ships[a].y > ships[b].y)
+            return (ships[a].y - ships[b].y) * 2;
+        if (ships[b].d == 2 && ships[a].x - ships[a].y == ships[b].x - ships[b].y && ships[b].y > ships[a].y)
+            return (ships[b].y - ships[a].y) * 2;
+    } else if (ships[a].d == 2) {
+        if (ships[b].d == 0 && ships[a].x == ships[b].x && ships[a].y > ships[b].y) return ships[a].y - ships[b].y;
+        if (ships[b].d == 3 && ships[a].x + ships[a].y == ships[b].x + ships[b].y && ships[b].x > ships[a].x)
+            return (ships[b].x - ships[a].x) * 2;
+        if (ships[b].d == 1 && ships[a].x - ships[a].y == ships[b].x - ships[b].y && ships[b].x < ships[a].x)
+            return (ships[a].x - ships[b].x) * 2;
+    } else {
+        if (ships[b].d == 1 && ships[a].y == ships[b].y && ships[a].x > ships[b].x) return ships[a].x - ships[b].x;
+        if (ships[b].d == 2 && ships[a].x + ships[a].y == ships[b].x + ships[b].y && ships[b].y > ships[a].y)
+            return (ships[b].y - ships[a].y) * 2;
+        if (ships[b].d == 0 && ships[a].x - ships[a].y == ships[b].x - ships[b].y && ships[b].y < ships[a].y)
+            return (ships[a].y - ships[b].y) * 2;
+    }
+    return inf;
+}
+
+ll crash_time_for_this(int id) {
+    ll ans = inf;
+    for (int i = 0; i < n; ++i) {
+        if (i == id || dead[i]) continue;
+        ans = std::min(ans, crash_time(i, id));
+    }
+    return ans;
+}
+
+map<ll, set<ll> > pmm;
+
+int get_near_id(int cid) {
+    auto [x,y,d,_] = ships[cid];
+    auto it = pmm.find(x + y);
+    if (it == pmm.end()) return n;
+    auto it2 = it->second.upper_bound(cid);
+    if (it2 == it->second.end()) return n;
+    return *it2;
+}
+
+int dist(int a, int b) {
+    return ships[b].x - ships[a].x;
+}
+
+void se_solve() {
+    for (int i = 0; i < n; ++i) {
+        auto [x,y,d,_] = ships[i];
+        if (d != 0) continue;
+        pmm[x + y].insert(i);
+    }
+    set<pair<ll, ll> > que;
+    for (int i = 0; i < n; ++i) {
+        if (ships[i].d != 1) continue;
+        auto nid = get_near_id(i);
+        if (nid != n) que.emplace(dist(i, nid), i);
+    }
+    while (!que.empty()) {
+        auto [cdist, id] = *que.begin();
+        que.erase(que.begin());
+        int nid = get_near_id(id);
+        if (nid == n) continue;
+        int ndist = dist(id, nid);
+        if (ndist != cdist) {
+            que.emplace(ndist, id);
+            continue;
+        }
+        dead[id] = true;
+        dead[nid] = true;
+        pmm[ships[id].x + ships[id].y].erase(nid);
+        if (pmm[ships[id].x + ships[id].y].empty()) pmm.erase(ships[id].x + ships[id].y);
+    }
+    for (int i = 0; i < n; ++i) if (!dead[i]) cout << ships[i].id + 1 << "\n";
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> ships[i], ships[i].id = i;
+    sort(ships, ships + n);
+    bool se = true;
+    for (int i = 0; i < n; ++i) if (ships[i].d != 0 && ships[i].d != 1) se = false;
+    if (se) {
+        se_solve();
+        return;
+    }
+    int erased = 0;
+    while (erased < n) {
+        int min_id = 0;
+        for (int i = 0; i < n; ++i) {
+            if (!dead[i]) {
+                min_id = i;
+                break;
+            }
+        }
+        ll in_ct = crash_time_for_this(min_id);
+        for (int i = min_id + 1; i < n; ++i) {
+            if (dead[i]) continue;
+            ll cct = crash_time_for_this(i);
+            if (cct < in_ct) min_id = i, in_ct = cct;
+        }
+        if (in_ct == inf) break;
+        dead[min_id] = true;
+        ++erased;
+        for (int i = 0; i < n; ++i) {
+            if (dead[i] || i == min_id) continue;
+            if (in_ct == crash_time(i, min_id)) {
+                dead[i] = true;
+                ++erased;
+            }
+        }
+    }
+    for (int i = 0; i < n; ++i) if (!dead[i]) cout << ships[i].id + 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

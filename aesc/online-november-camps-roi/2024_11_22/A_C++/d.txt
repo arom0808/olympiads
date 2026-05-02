@@ -1,0 +1,136 @@
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
+#include <random>
+
+using namespace std;
+
+using ll = int64_t;
+
+constexpr int maxn = 100;
+
+struct PV {
+    int x, y, z;
+};
+
+int sq_dist(const PV &a, const PV &b) {
+    return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z);
+}
+
+double dist(const PV &a, const PV &b) {
+    return std::sqrt(
+        static_cast<double>((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z)));
+}
+
+mt19937 rng(32545);
+int n, r, m;
+vector<int> way, best_way;
+double ans, best_ans;
+PV points[maxn];
+vector<PV> in_circle_points;
+uniform_real_distribution<double> rrdist(0.0, 1.0);
+
+
+pair<PV, double> best_circle_dist_point(const PV &a, const PV &b) {
+    double mdist = 1e9;
+    PV bp = in_circle_points[0];
+    for (auto p: in_circle_points) {
+        double cdist = dist(a, p) + dist(p, b);
+        if (cdist < mdist) bp = p, mdist = cdist;
+    }
+    return {bp, mdist};
+}
+
+double get_ans() {
+    double res = 0;
+    int nwc = m;
+    for (int i = 0; i < n; ++i) {
+        if (!nwc) {
+            auto [ccp,cdist] = best_circle_dist_point(points[way[i - 1]], points[way[i]]);
+            res += cdist;
+            nwc = m - 1;
+            continue;
+        }
+        --nwc;
+        if (i == 0) res += dist(PV(0, 0, 0), points[way[i]]);
+        else res += dist(points[way[i - 1]], points[way[i]]);
+    }
+    res += dist(points[way.back()], PV(0, 0, 0));
+    return res;
+}
+
+void make_in_circle_points() {
+    for (int x = -r; x <= r; ++x)
+        for (int y = -r; y <= r; ++y)
+            if (x * x + y * y <= r * r)
+                in_circle_points.emplace_back(x, y, 0);
+}
+
+struct AnsSeqEl {
+    bool type;
+    int id;
+    PV fp;
+};
+
+vector<AnsSeqEl> ans_seq;
+
+void make_ans_seq() {
+    ans_seq.clear();
+    int nwc = m;
+    for (int i = 0; i < n; ++i) {
+        if (!nwc) {
+            auto [ccp,cdist] = best_circle_dist_point(points[way[i - 1]], points[way[i]]);
+            ans_seq.emplace_back(1, 0, ccp);
+            nwc = m;
+        }
+        --nwc;
+        ans_seq.emplace_back(0, i);
+    }
+}
+
+void solve() {
+    int test_id;
+    cin >> test_id;
+    cin >> n >> r >> m;
+    for (int i = 0; i < n; ++i) cin >> points[i].x >> points[i].y >> points[i].z;
+    make_in_circle_points();
+    way.resize(n);
+    iota(way.begin(), way.end(), 0);
+    shuffle(way.begin(), way.end(), rng);
+    best_way = way;
+    ans = best_ans = get_ans();
+    double t = 1;
+    uniform_int_distribution<int> dist_pos(0, n - 1);
+    for (int i = 0; i < 200000; ++i) {
+        t *= 0.99;
+        if (i % 100000 == 0) t = 1;
+        int l = dist_pos(rng), r = dist_pos(rng);
+        if (l > r) swap(l, r);
+        ++r;
+        reverse(way.begin() + l, way.begin() + r);
+        double cans = get_ans();
+        if (cans > ans || rrdist(rng) < exp((cans - ans) / t)) {
+            ans = cans;
+            if (ans > best_ans) best_way = way, best_ans = ans;
+        } else {
+            reverse(way.begin() + l, way.begin() + r);
+        }
+    }
+    make_ans_seq();
+    for (auto cael: ans_seq) {
+        if (!cael.type) cout << cael.id + 1 << " ";
+        else cout << "F(" << cael.fp.x << "," << cael.fp.y << ")" << " ";
+    }
+    cout << "B\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

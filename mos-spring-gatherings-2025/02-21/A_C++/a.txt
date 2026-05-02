@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <unordered_map>
+
+using namespace std;
+using ll = long long;
+
+vector<ll> fvs;
+
+// map<pair<ll, ll>, int> cache;
+// map<ll, int> cache[100];
+
+int rec_sol(ll cv, ll pos, bool minus) {
+    if (pos == -1) {
+        if (cv == 0) return 0;
+        return 1e9;
+    }
+    // auto it = cache[pos].find(cv);
+    // if (it != cache[pos].end()) return it->second;
+    int ans = rec_sol(cv, pos - 1, minus);
+    ans = std::min(ans, rec_sol(cv + fvs[pos], pos - 1, true) + 1);
+    if (!minus) ans = std::min(ans, rec_sol(cv - fvs[pos], pos - 1, false) + 1);
+    // cache[pos].emplace(cv, ans);
+    return ans;
+}
+
+bool used[100];
+
+int stupid_get_ans(ll n) {
+    return rec_sol(n, upper_bound(fvs.begin(), fvs.end(), n) - fvs.begin(), false);
+}
+
+int get_ans(ll n) {
+    int ans = 0;
+    for (int i = 0; i < fvs.size(); ++i) used[i] = false;
+    for (ll tn = n, i = fvs.size() - 1; i >= 0; --i) if (fvs[i] <= tn) used[i] = true, tn -= fvs[i], ++ans;
+    int ncnt = 0;
+    for (int i = fvs.size() - 1; i >= 0; --i) {
+        if (used[i]) {
+            n -= fvs[i];
+            ++ncnt;
+            continue;
+        }
+        ll tn = fvs[i] - n;
+        int ccnt = ncnt + 1;
+        for (int j = i - 1; j >= 0; --j) if (fvs[j] <= tn) tn -= fvs[j], ++ccnt;
+        ans = std::min(ans, ccnt);
+    }
+    return ans;
+}
+
+void test_solve() {
+    ll n;
+    cin >> n;
+    cout << get_ans(n) << "\n";
+}
+
+void solve() {
+    fvs.emplace_back(1);
+    fvs.emplace_back(2);
+    while (true) {
+        ll nf = fvs[fvs.size() - 2] + fvs.back();
+        fvs.emplace_back(nf);
+        if (nf > 4e17) break;
+    }
+    for (int i = 1; i <= 1000; ++i) {
+        int st = stupid_get_ans(i);
+        int cl = get_ans(i);
+        if (st != cl) {
+            cout << i << " " << st << " " << cl << "\n";
+            return;
+        }
+    }
+    cout << "Yaha\n";
+    // int t;
+    // cin >> t;
+    // while (t--) test_solve();
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr), cout.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

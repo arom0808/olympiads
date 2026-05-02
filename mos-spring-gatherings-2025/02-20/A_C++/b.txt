@@ -1,0 +1,93 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 1e5 + 10, maxk = 25;
+int a[maxk];
+int bs[maxn][maxk];
+int n, k;
+int good[maxn];
+int pf[maxn];
+
+namespace ParSoch {
+    int used[maxk];
+    int timer = 0;
+    vector<int> g[maxk];
+    int lp[maxk];
+
+    bool dfs(int v) {
+        if (used[v] == timer) return false;
+        used[v] = timer;
+        for (auto u: g[v]) {
+            if (lp[u] != -1) continue;
+            lp[u] = v;
+            return true;
+        }
+        for (auto u: g[v]) {
+            if (!dfs(lp[u])) continue;
+            lp[u] = v;
+            return true;
+        }
+        return false;
+    }
+
+    bool is_good(int arr_id) {
+        for (int i = 0; i < k; ++i) g[i].clear();
+        for (int i = 0; i < k; ++i) for (int j = 0; j < k; ++j) if (bs[arr_id][j] % a[i] == 0) g[i].push_back(j);
+        for (int i = 0; i < k; ++i) lp[i] = -1;
+        ++timer;
+        for (int i = 0; i < k; ++i) {
+            if (!dfs(i)) return false;
+            ++timer;
+        }
+        return true;
+    }
+}
+
+namespace ST {
+    int tree[maxn * 8];
+
+    void add(int pos, int val) {
+        pos += n * 4;
+        tree[pos] += val;
+        for (pos >>= 1; pos; pos >>= 1) tree[pos] = tree[pos << 1] + tree[pos << 1 | 1];
+    }
+
+    int sum(int l, int r) {
+        l += n * 4, r += n * 4;
+        int ans = 0;
+        while (l != r) {
+            if (l & 1) ans += tree[l++];
+            if (r & 1) ans += tree[--r];
+            l >>= 1, r >>= 1;
+        }
+        return ans;
+    }
+}
+
+void solve() {
+    cin >> n >> k;
+    for (int i = 0; i < k; ++i) cin >> a[i];
+    for (int i = 0; i < n; ++i) for (int j = 0; j < k; ++j) cin >> bs[i][j];
+    for (int i = 0; i < n; ++i) good[i] = ParSoch::is_good(i);
+    for (int i = 0; i < n; ++i) pf[i + 1] = pf[i] + good[i];
+    for (int i = 0; i <= n; ++i) ST::add(2 * pf[i] - i + n, 1);
+    ll ans = 0;
+    for (int i = 0; i < n; ++i) {
+        ST::add(2 * pf[i] - i + n, -1);
+        ans += ST::sum(2 * pf[i] - i + n + 1, n * 4);
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,188 @@
+#pragma GCC optimize("Ofast")
+
+#include <iostream>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <list>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 2e5;
+
+template<typename T>
+T mceil(T a, T b) {
+    return (a + b - 1) / b;
+}
+
+struct Per {
+    int x, y;
+    int ins_ids[4];
+    bool type;
+    list<int>::iterator vert_iter, hor_iter;
+};
+
+int n, m, q;
+list<int> vert_pers[maxn], hor_pers[maxn];
+map<int, list<int>::iterator> vert_pers_it[maxn], hor_pers_it[maxn];
+vector<int> ways[maxn];
+Per pers[maxn];
+int cans[maxn];
+int res_cnts[maxn];
+int ans;
+int used_pers = 0;
+
+void add_rc(int fy) {
+    if (res_cnts[fy]++ == 0) ++ans;
+}
+
+void erase_rc(int fy) {
+    if (--res_cnts[fy] == 0) --ans;
+}
+
+int from_to_to(int fdir, int t) {
+    if (!t) return 3 - fdir;
+    return fdir ^ 1;
+}
+
+int inv_dir(int dir) {
+    return dir ^ 2;
+}
+
+void remove_way(int wid) {
+    for (auto pid: ways[wid]) for (int i = 0; i < 4; ++i) if (pers[pid].ins_ids[i] == wid) pers[pid].ins_ids[i] = -1;
+    if (cans[wid] != -1) erase_rc(cans[wid]);
+    cans[wid] = -1;
+    ways[wid].clear();
+}
+
+int find_nearest_by_dir_by_map(int id, int fdir) {
+    if (fdir == 0) {
+        auto it = vert_pers_it[pers[id].y].upper_bound(pers[id].x);
+        if (it == vert_pers_it[pers[id].y].end()) return -1;
+        return *(it->second);
+    }
+    if (fdir == 2) {
+        auto it = vert_pers_it[pers[id].y].lower_bound(pers[id].x);
+        if (it == vert_pers_it[pers[id].y].begin()) return -1;
+        return *(prev(it)->second);
+    }
+    if (fdir == 1) {
+        auto it = hor_pers_it[pers[id].x].lower_bound(pers[id].y);
+        if (it == hor_pers_it[pers[id].x].begin()) return -1;
+        return *(prev(it)->second);
+    }
+    auto it = hor_pers_it[pers[id].x].upper_bound(pers[id].y);
+    if (it == hor_pers_it[pers[id].x].end()) return -1;
+    return *(it->second);
+}
+
+int find_nearest_by_dir_by_list(int id, int fdir) {
+    if (fdir == 0) {
+        auto it = next(pers[id].vert_iter);
+        if (it == vert_pers[pers[id].y].end()) return -1;
+        return *it;
+    }
+    if (fdir == 2) {
+        auto it = pers[id].vert_iter;
+        if (it == vert_pers[pers[id].y].begin()) return -1;
+        return *prev(it);
+    }
+    if (fdir == 1) {
+        auto it = pers[id].hor_iter;
+        if (it == hor_pers[pers[id].x].begin()) return -1;
+        return *prev(it);
+    }
+    auto it = next(pers[id].hor_iter);
+    if (it == hor_pers[pers[id].x].end()) return -1;
+    return *it;
+}
+
+void add_way(int sy) {
+    auto it = vert_pers[sy].begin();
+    if (it == vert_pers[sy].end()) {
+        add_rc(cans[sy] = sy);
+        return;
+    }
+    int pid = *it;
+    int dir = from_to_to(0, pers[pid].type);
+    ways[sy].push_back(pid);
+    pers[pid].ins_ids[0] = sy;
+    while (true) {
+        int nid = find_nearest_by_dir_by_list(pid, dir);
+        if (nid != -1) {
+            ways[sy].push_back(nid);
+            pers[nid].ins_ids[dir] = sy;
+            dir = from_to_to(dir, pers[nid].type);
+            pid = nid;
+        } else {
+            if (dir == 0) add_rc(cans[sy] = pers[pid].y);
+            else cans[sy] = -1;
+            break;
+        }
+    }
+}
+
+int tways[4];
+
+void erase_per(int x, int y) {
+    int pid = *(vert_pers_it[y].lower_bound(x)->second);
+    for (int i = 0; i < 4; ++i) tways[i] = pers[pid].ins_ids[i];
+    sort(begin(tways), begin(tways) + 4);
+    fill(unique(begin(tways), begin(tways) + 4), begin(tways) + 4, -1);
+    for (int i = 0; i < 4; ++i) if (tways[i] != -1) remove_way(tways[i]);
+    vert_pers_it[y].erase(x), hor_pers_it[x].erase(y);
+    vert_pers[y].erase(pers[pid].vert_iter), hor_pers[x].erase(pers[pid].hor_iter);
+    for (int i = 0; i < 4; ++i) if (tways[i] != -1) add_way(tways[i]);
+}
+
+void insert_per(int x, int y, int t) {
+    int pid = used_pers++;
+    for (int i = 0; i < 4; ++i) pers[pid].ins_ids[i] = -1;
+    pers[pid].x = x, pers[pid].y = y, pers[pid].type = t;
+    for (int i = 0; i < 4; ++i) tways[i] = -1;
+    for (int dir = 0; dir < 4; ++dir) {
+        int nid = find_nearest_by_dir_by_map(pid, dir);
+        if (nid == -1) {
+            if (dir == 2) tways[dir] = y;
+        } else {
+            int cdir = inv_dir(from_to_to(dir, pers[nid].type));
+            if (pers[nid].ins_ids[cdir] != -1) tways[dir] = pers[nid].ins_ids[cdir];
+        }
+    }
+    sort(begin(tways), begin(tways) + 4);
+    fill(unique(begin(tways), begin(tways) + 4), begin(tways) + 4, -1);
+    for (int i = 0; i < 4; ++i) if (tways[i] != -1) remove_way(tways[i]);
+    auto mit1 = vert_pers_it[y].upper_bound(x), mit2 = hor_pers_it[x].upper_bound(y);
+    list<int>::iterator it1, it2;
+    if (mit1 == vert_pers_it[y].end()) it1 = vert_pers[y].end();
+    else it1 = pers[*(mit1->second)].vert_iter;
+    if (mit2 == hor_pers_it[x].end()) it2 = hor_pers[x].end();
+    else it2 = pers[*(mit2->second)].hor_iter;
+    vert_pers_it[y].emplace(x, pers[pid].vert_iter = vert_pers[y].insert(it1, pid));
+    hor_pers_it[x].emplace(y, pers[pid].hor_iter = hor_pers[x].insert(it2, pid));
+    for (int i = 0; i < 4; ++i) if (tways[i] != -1) add_way(tways[i]);
+}
+
+void solve() {
+    cin >> n >> m >> q;
+    for (int i = 0; i < m; ++i) cans[i] = i, res_cnts[i] = 1;
+    ans = m;
+    for (int i = 0, a, x, y; i < q; ++i) {
+        cin >> a >> x >> y, --x, --y;
+        if (a == 0) erase_per(x, y);
+        else insert_per(x, y, a - 1);
+        cout << ans << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

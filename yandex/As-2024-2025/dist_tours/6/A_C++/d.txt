@@ -1,0 +1,55 @@
+#ifndef LOCAL
+#pragma GCC optimize("Ofast")
+#endif
+
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 1000, mod = 1e9 + 7;
+int table[maxn][maxn];
+int n, q;
+
+void solve1() {
+}
+
+void solve2() {
+    for (int i = 0; i < n; ++i) {
+        int x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        ll ans = std::min(std::abs(x1), std::abs(y1)) * std::min(std::abs(x1), std::abs(y1));
+        ll len1 = std::min(std::abs(x1), std::abs(y1));
+        ll len2 = len1 + 1, len3 = len2, len4 = len3;
+        if (x1 >= 0) {
+            if (y1 <= 0) {
+                if (std::abs(y1) < std::abs(x1)) {
+                    ans += std::abs(x1) - std::abs(y1);
+                } else {
+                    ans+=len1+len2+len3 +
+                }
+            }
+        }
+    }
+}
+
+void solve() {
+    cin >> n >> q;
+    if (n <= 1000) solve1();
+    else solve2();
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

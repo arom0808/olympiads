@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+const int32_t maxn = 1 << 9;
+int32_t k, n;
+
+int32_t table[maxn][maxn];
+vector<int32_t> g[maxn];
+int32_t rm[maxn];
+int32_t used[maxn];
+int32_t timer;
+
+bool dfs(int32_t v) {
+    if (used[v] == timer) return false;
+    used[v] = timer;
+    for (auto u: g[v]) {
+        if (rm[u] == -1) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    for (auto u: g[v]) {
+        if (dfs(rm[u])) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
+
+int main() {
+    long long a, b;
+    cin >> a >> b;
+    if (a == b) {
+        cout << a << "\n" << b << "\n";
+        return 0;
+    }
+    int i = 2;
+    while (i * i <= a) {
+        if (a % i == 0) {
+            if (a / i + i == b) {
+                cout << a / i << "*" << i << endl;
+                cout << a / i << "+" << i << endl;
+                return 0;
+            }
+        }
+        i++;
+    }
+    i = 2;
+    while (i * i <= b) {
+        if (b % i == 0) {
+            if (b / i + i == a) {
+                cout << b / i << "+" << i << endl;
+                cout << b / i << "*" << i << endl;
+                return 0;
+            }
+        }
+        i++;
+    }
+    cout << a << endl;
+    cout << b;
+}

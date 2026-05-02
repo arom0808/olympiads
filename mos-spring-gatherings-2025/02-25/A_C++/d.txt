@@ -1,0 +1,75 @@
+#include <iostream>
+#include <map>
+#include <vector>
+#include <deque>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 250010, maxm = 3e6 + 10, inf = 1e9;
+int n, m;
+vector<int> g[maxn];
+int k;
+vector<int> ways[maxn];
+int dist[maxn];
+bool used[maxn];
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0, u, v; i < m; ++i) {
+        cin >> u >> v, --u, --v;
+        g[u].push_back(v), g[v].push_back(u);
+    }
+    cin >> k;
+    for (int i = 0, sz; i < k; ++i) {
+        cin >> sz;
+        ways[i].resize(sz);
+        for (auto &v: ways[i]) cin >> v, --v;
+    }
+    if (ways[0][0] == 0) {
+        cout << "impossible\n";
+        return;
+    }
+    for (int i = 0; i < n; ++i) dist[i] = inf;
+    dist[0] = 0;
+    deque<int> que;
+    used[0] = true;
+    que.push_back(0);
+    while (!que.empty()) {
+        int v = que.front();
+        que.pop_front();
+        for (auto u: g[v]) {
+            if (used[u] || (ways[0][(dist[v]) % ways[0].size()] == u && v == ways[0][(dist[v] + 1) % ways[0].size()])
+                || u == ways[0][(dist[v] + 1) % ways[0].size()])
+                continue;
+            dist[u] = dist[v] + 1;
+            used[u] = true;
+            que.push_back(u);
+        }
+        for (auto u: g[v]) {
+            if (used[u] || (ways[0][(dist[v]) % ways[0].size()] == u && v == ways[0][(dist[v] + 1) % ways[0].size()]))
+                continue;
+            if (u != ways[0][(dist[v] + 1) % ways[0].size()]) continue;
+            if (v == ways[0][(dist[v] + 2) % ways[0].size()]) continue;
+            dist[u] = dist[v] + 2;
+            used[u] = true;
+            que.push_back(u);
+        }
+    }
+    int ans = dist[n - 1];
+    if (ans == inf) cout << "impossible\n";
+    else cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

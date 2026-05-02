@@ -1,0 +1,146 @@
+#include <iostream>
+#include <random>
+#include <limits>
+
+using namespace std;
+using ll = long long;
+using ld = long double;
+
+constexpr ll seed = 254254;
+mt19937 rng(seed);
+
+namespace DD {
+    uniform_int_distribution<ll> prior_dist(1, numeric_limits<ll>::max());
+
+    struct Node {
+        ll val = 0, sz = 0, prior = 0;
+        ll max_not_left_right = 0, max_not_left = 0, max_not_right = 0, max_val = 0;
+        Node *left = nullptr, *right = nullptr;
+
+        void init(ll _val);
+    };
+
+
+    constexpr ll max_nodes_cnt = 5e5;
+    ll nodes_used = 1;
+    Node nodes[max_nodes_cnt];
+    Node *zero_node = &nodes[0];
+    Node *root = zero_node;
+
+    void Node::init(ll _val) {
+        sz = 1;
+        prior = prior_dist(rng);
+        max_val = val = _val;
+        left = right = zero_node;
+    }
+
+    Node *get_new_node(ll val) {
+        nodes[nodes_used].init(val);
+        return &(nodes[nodes_used++]);
+    }
+
+    void upd_from_children(Node *v) {
+        v->sz = v->left->sz + v->right->sz + 1;
+        v->max_not_left_right = v->max_not_left = v->max_not_right = v->max_val = 0;
+        v->max_not_left_right = std::max(v->max_not_left_right, v->left->max_not_left + v->right->max_not_right);
+        v->max_not_left = std::max(v->max_not_left, v->left->max_not_left + v->right->max_val);
+        v->max_not_right = std::max(v->max_not_right, v->right->max_not_right + v->left->max_val);
+        v->max_val = std::max(v->max_val, v->left->max_val + v->right->max_val);
+        if (v->left->sz && v->right->sz)
+            v->max_not_left_right = std::max(v->max_not_left_right,
+                                             v->left->max_not_left_right + v->right->max_not_left_right + v->val);
+        if (v->left->sz)
+            v->max_not_left = std::max(v->max_not_left, v->left->max_not_left_right + v->right->max_not_left + v->val);
+        if (v->right->sz)
+            v->max_not_right = std::max(v->max_not_right,
+                                        v->left->max_not_right + v->right->max_not_left_right + v->val);
+        v->max_val = std::max(v->max_val, v->left->max_not_right + v->right->max_not_left + v->val);
+    }
+
+    pair<Node *, Node *> split(Node *v, ll cnt) {
+        if (v == zero_node) return {zero_node, zero_node};
+        if (cnt <= v->left->sz) {
+            auto [l,r] = split(v->left, cnt);
+            v->left = r;
+            upd_from_children(v);
+            return {l, v};
+        }
+        auto [l,r] = split(v->right, cnt - v->left->sz - 1);
+        v->right = l;
+        upd_from_children(v);
+        return {v, r};
+    }
+
+    Node *merge(Node *a, Node *b) {
+        if (a == zero_node) return b;
+        if (b == zero_node) return a;
+        if (a->prior > b->prior) {
+            a->right = merge(a->right, b);
+            upd_from_children(a);
+            return a;
+        }
+        b->left = merge(a, b->left);
+        upd_from_children(b);
+        return b;
+    }
+
+    void insert(ll pos, ll val) {
+        auto [l,r] = split(root, pos);
+        auto v = get_new_node(val);
+        root = merge(merge(l, v), r);
+    }
+
+    void assign(ll pos, ll val) {
+        auto [l,m] = split(root, pos);
+        auto [t,r] = split(m, 1);
+        auto v = get_new_node(val);
+        root = merge(merge(l, v), r);
+    }
+
+    void erase(ll pos) {
+        auto [l,m] = split(root, pos);
+        auto [t,r] = split(m, 1);
+        root = merge(l, r);
+    }
+
+    ll get_f() {
+        return root->max_val;
+    }
+}
+
+void solve() {
+    ll n, q;
+    cin >> n >> q;
+    for (ll i = 0, val; i < n; ++i) {
+        cin >> val;
+        DD::insert(i, val);
+    }
+    cout << DD::get_f() << "\n";
+    string temp;
+    for (ll _ = 0, v, p; _ < q; ++_) {
+        cin >> temp;
+        if (temp == "insert") {
+            cin >> v >> temp >> p;
+            DD::insert(p, v);
+        } else if (temp == "assign") {
+            cin >> v >> temp >> p;
+            DD::assign(p, v);
+        } else {
+            cin >> temp >> p;
+            DD::erase(p);
+        }
+        cout << DD::get_f() << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

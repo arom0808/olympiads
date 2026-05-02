@@ -1,0 +1,41 @@
+#include <iostream>
+
+using namespace std;
+using ll = long long;
+using ld = long double;
+
+constexpr int maxn = 100;
+
+int n;
+int cost[maxn];
+
+bool check_fabric(int pos) {
+    if (n - pos - 1 <= cost[pos]) return false;
+    for (int j = pos + 1; j < n; ++j) if (j - pos <= cost[pos] - cost[j]) return false;
+    return true;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> cost[i];
+    ll money = 0, fabrics = 1;
+    for (int i = 0; i < n; ++i) {
+        money += fabrics;
+        if (!check_fabric(i)) continue;
+        fabrics += money / cost[i];
+        money %= cost[i];
+    }
+    cout << money << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

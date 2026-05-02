@@ -1,0 +1,98 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <algorithm>
+
+using namespace std;
+
+const int32_t maxn = 100;
+
+vector<int32_t> g[maxn];
+bool used[maxn];
+bool cycle_used[maxn];
+
+bool ok = true;
+
+void dfs(int32_t v) {
+    if (used[v]) return;
+    used[v] = true;
+    if (g[v].size() > 2) ok = false;
+    for (auto u: g[v]) {
+        if (used[u]) continue;
+        dfs(u);
+    }
+}
+
+void cycle_dfs(int32_t v, int32_t p = -1) {
+    if (cycle_used[v]) {
+        ok = false;
+        return;
+    }
+    cycle_used[v] = true;
+    for (auto u: g[v]) if (u != p) cycle_dfs(u, v);
+}
+
+int32_t n, m;
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    cin >> n >> m;
+    for (int32_t i = 0; i < m; ++i) {
+        int32_t a, b;
+        cin >> a >> b, --a, --b;
+        g[a].push_back(b);
+        g[b].push_back(a);
+    }
+    for (int32_t i = 0; i < n; ++i) sort(g[i].begin(), g[i].end());
+    for (int32_t i = 0; i < n; ++i) {
+        if (find(g[i].begin(), g[i].end(), i) != g[i].end()) {
+            cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+            return 0;
+        }
+        for (int32_t j = 0; j + 1 < g[i].size(); ++j) {
+            if (g[i][j] == g[i][j + 1]) {
+                cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+                return 0;
+            }
+        }
+    }
+    vector<int32_t> verts(n);
+    iota(verts.begin(), verts.end(), 0);
+    sort(verts.begin(), verts.end(), [](int32_t a, int32_t b) {
+        return g[a].size() > g[b].size();
+    });
+    if (n < 3) {
+        cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+        return 0;
+    }
+    int32_t center = verts.front();
+    int32_t st = verts.back();
+    cycle_dfs(center);
+    if (!ok) {
+        cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+        return 0;
+    }
+    if (g[center].size() < 2 || g[st].size() > 1) {
+        cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+        return 0;
+    }
+    for (auto u: g[center]) if (g[u].size() >= g[st].size()) st = u;
+    for (auto u: g[center]) {
+        if (g[u].size() > 1 && u != st) {
+            cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+            return 0;
+        }
+    }
+    used[center] = true;
+    for (auto u: g[center]) {
+        if (u != st) {
+            used[u] = true;
+        }
+    }
+    dfs(st);
+    for (int32_t i = 0; i < n; ++i) if (!used[i]) ok = false;
+    if (ok) {
+        cout << ((g[center].size() - 1) % 2 == 0 ? "LOVES\n" : "DOES NOT LOVE\n");
+    } else
+        cout << "UNKNOWN ERROR (0xFFFFFFFF)\n";
+}

@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
+using namespace std;
+using ll = long long;
+
+vector<int> vs[10000];
+int vs_used = 0;
+
+int quick_count = 0;
+
+void quick_sort(vector<int> &arr) {
+    if (arr.size() <= 1) return;
+    auto &less = vs[vs_used++], &greater = vs[vs_used++];
+    less.clear(), greater.clear();
+    int pv = arr[0];
+    for (int i = 1; i < arr.size(); ++i) {
+        ++quick_count;
+        if (arr[i] < pv) less.push_back(arr[i]);
+        else greater.push_back(arr[i]);
+    }
+    quick_sort(less);
+    quick_sort(greater);
+    less.push_back(pv);
+    merge(less.begin(), less.end(), greater.begin(), greater.end(), arr.begin());
+}
+
+int ins_count = 0;
+
+void ins_sort(vector<int> &arr) {
+    for (int i = 1; i < arr.size(); ++i) {
+        int j = i;
+        ++ins_count;
+        while (j && arr[j - 1] > arr[j]) {
+            swap(arr[j - 1], arr[j]);
+            --j;
+            ++ins_count;
+        }
+    }
+}
+
+void solve() {
+    int n, x;
+    cin >> n >> x;
+    vector<int> arr(n), arr2(n);
+    iota(arr.begin(), arr.end(), 0);
+    int ans = 0;
+    do {
+        vs_used = quick_count = ins_count = 0;
+        copy(arr.begin(), arr.end(), arr2.begin());
+        quick_sort(arr2);
+        copy(arr.begin(), arr.end(), arr2.begin());
+        ins_sort(arr2);
+        if (quick_count * x >= ins_count) ++ans;
+    } while (next_permutation(arr.begin(), arr.end()));
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

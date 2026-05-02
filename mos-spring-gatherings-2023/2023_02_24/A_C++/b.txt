@@ -1,0 +1,106 @@
+#include <iostream>
+#include <map>
+
+using namespace std;
+using ll = long long;
+
+map<ll, ll> get_dividers(ll val) {
+    map<ll, ll> res;
+    for (ll i = 2; i * i <= val;) {
+        if (val % i == 0) {
+            ++res[i];
+            val /= i;
+        } else ++i;
+    }
+    if (val != 1) ++res[val];
+    return res;
+}
+
+bool check_twice(const map<ll, ll> &divs) {
+    for (auto [div,cnt]: divs) if (cnt > 1) return true;
+    return false;
+}
+
+ll get_num_from_map(const map<ll, ll> &divs) {
+    ll ans = 1;
+    for (auto [div, cnt]: divs) for (ll i = 0; i < cnt; ++i) ans *= div;
+    return ans;
+}
+
+bool check_submap(const map<ll, ll> &d1, const map<ll, ll> &d2) {
+    if (d1.size() != d2.size()) return false;
+    bool ok = false;
+    for (auto it1 = d1.begin(), it2 = d2.begin(); it1 != d1.end(); ++it1, ++it2) {
+        if (it1->first != it2->first) return false;
+        if (it1->second < it2->first) return false;
+        if (it1->second > it2->second) ok = true;
+    }
+    return ok;
+}
+
+ll count_size_of_map(const map<ll, ll> &divs) {
+    ll ans = 0;
+    for (auto [div, cnt]: divs) ans += cnt;
+    return ans;
+}
+
+void prll_map(const map<ll, ll> &divs) {
+    cout << count_size_of_map(divs) << " ";
+    for (auto [div,cnt]: divs) for (ll i = 0; i < cnt; ++i) cout << div << " ";
+    cout << "\n";
+}
+
+void rec_sol(const map<ll, ll> &start_dism, const map<ll, ll> &start_divs1, map<ll, ll> &divs1,
+             map<ll, ll>::iterator it1) {
+    if (it1 == divs1.end()) {
+        ll val2 = get_num_from_map(divs1);
+        ll valm2 = val2 + 1;
+        auto divsm2 = get_dividers(valm2);
+        if (check_submap(start_dism, divsm2)) {
+            prll_map(start_divs1);
+            prll_map(start_dism);
+            prll_map(divs1);
+            prll_map(divsm2);
+            cout << "\n";
+            cout.flush();
+        }
+        return;
+    }
+    ll start_cnt = it1->second;
+    for (ll i = start_cnt; i; --i) {
+        it1->second = i;
+        rec_sol(start_dism, start_divs1, divs1, next(it1));
+    }
+    it1->second = start_cnt;
+}
+
+void check_val(ll val) {
+    auto divs1 = get_dividers(val);
+    if (!check_twice(divs1)) return;
+    auto divsm1 = get_dividers(val + 1);
+    if (!check_twice(divsm1)) return;
+    auto mutable_divs1 = divs1;
+    rec_sol(divsm1, divs1, mutable_divs1, mutable_divs1.begin());
+}
+
+void solve() {
+    for (ll val = 4; val <= 1e15; val *= 2) {
+        for (int i = 1; i <= 100; ++i) check_val(val * i);
+    }
+    // ll n;
+    // cin >> n;
+    // if (n == 3) cout << "3 2 2 2\n2 3 3\n1 2\n1 3\n";
+    // else cout << "Impossible";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt","r",stdin);
+#endif
+    solve();
+    return 0;
+}

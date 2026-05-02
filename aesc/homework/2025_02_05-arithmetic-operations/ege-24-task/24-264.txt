@@ -1,0 +1,15 @@
+def get_type(c):
+    return ord('0') <= ord(c) <= ord('9')
+
+
+def main():
+    s = open("input.txt", "r").read()
+    s = ['=' if (not ((i != 0 and get_type(v) != get_type(s[i - 1]))
+                      or (i != len(s) - 1 and get_type(v) != get_type(s[i + 1])))) else v
+         for i, v in enumerate(s)]
+    s = "".join(s)
+    print(s)
+    print(max(map(len, s.split("="))))
+
+
+main()

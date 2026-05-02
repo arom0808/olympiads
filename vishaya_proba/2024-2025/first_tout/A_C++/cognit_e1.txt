@@ -1,0 +1,112 @@
+#include <iostream>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 2e5;
+int n;
+int arr[maxn];
+int inf = 1e9;
+
+namespace ST {
+    struct Node {
+        set<pair<int, int> > nums;
+
+        void init(int num, int pos) {
+            nums.clear();
+            nums.insert({num, pos});
+        }
+
+        void erase_val(int num, int pos) {
+            if (auto it = nums.find({num, pos}); it != nums.end()) nums.erase(it);
+        }
+    };
+
+    Node tree[maxn * 4];
+    int size;
+
+    void _build(int v, int l, int r) {
+        if (r - l == 1) {
+            tree[v].init(arr[l], l);
+            return;
+        }
+        int mid = (l + r) / 2;
+        _build(v * 2, l, mid);
+        _build(v * 2 + 1, mid, r);
+        tree[v].nums.clear();
+        for (auto pp: tree[v * 2].nums) tree[v].nums.insert(pp);
+        for (auto pp: tree[v * 2 + 1].nums) tree[v].nums.insert(pp);
+    }
+
+    void _erase(int v, int l, int r, int num, int pos) {
+        if (l > pos || pos >= r) return;
+        tree[v].erase_val(num, pos);
+        if (r - l == 1) return;
+        int mid = (l + r) / 2;
+        _erase(v * 2, l, mid, num, pos);
+        _erase(v * 2 + 1, mid, r, num, pos);
+    }
+
+    int _left_leq_pos(int v, int l, int r, int a, int b, int beq_num) {
+        if (l >= r || l >= b || a >= r) return inf;
+        if (tree[v].nums.lower_bound({beq_num + 1, 0}) == tree[v].nums.begin()) return inf;
+        if (r - l == 1) return l;
+        int mid = (l + r) / 2;
+        auto r1 = _left_leq_pos(v * 2, l, mid, a, b, beq_num);
+        if (r1 != inf) return r1;
+        return _left_leq_pos(v * 2 + 1, mid, r, a, b, beq_num);
+    }
+
+    void build() {
+        size = n;
+        _build(1, 0, size);
+    }
+
+    void erase(int num, int pos) {
+        _erase(1, 0, size, num, pos);
+    }
+
+    int left_leq_pos(int a, int b, int beq_num) {
+        return _left_leq_pos(1, 0, size, a, b, beq_num);
+    }
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; i++) cin >> arr[i];
+    ST::build();
+    int ans = 0, ready = 0, cl = 1;
+    for (; ready < n; ++ans) {
+        bool task_soluted = false;
+        for (int pos = 0; pos < n;) {
+            int npos = ST::left_leq_pos(pos, n, cl);
+            if (npos < n) {
+                task_soluted = true;
+                ++ready;
+                ++cl;
+                ST::erase(arr[npos], npos);
+            }
+            pos = npos;
+        }
+        if (!task_soluted) {
+            cout << "-1\n";
+            return;
+        }
+    }
+    cout << ans << "\n";
+}
+
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

@@ -1,0 +1,92 @@
+#ifndef LOCAL
+#pragma GCC optimize("Ofast")
+#endif
+
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+using ll = long long;
+
+constexpr int MAX_MEM = 1e8;
+char MEM[MAX_MEM];
+int CUR_MEM = 0;
+
+void *operator new(size_t x) {
+    auto ret = MEM + CUR_MEM;
+    CUR_MEM += x;
+    return ret;
+}
+
+void operator delete(void *) {
+}
+
+constexpr int asz = 26;
+string a, b;
+int afcnts[asz], bfcnts[asz];
+vector<int> poss_by_c[asz];
+int cposs[asz];
+
+struct NearT {
+    int lid, in_arr_pos, gpos;
+
+    bool operator<(const NearT &rhs) const {
+        return gpos > rhs.gpos;
+    }
+};
+
+NearT cur_near[asz];
+
+void solve() {
+    cin >> a >> b;
+    for (auto c: a) ++afcnts[c - 'a'];
+    for (auto c: b) ++bfcnts[c - 'a'];
+    for (int i = 0; i < asz; ++i) {
+        if (bfcnts[i] > afcnts[i]) {
+            cout << "impossible\n";
+            return;
+        }
+    }
+    for (int i = 0; i < asz; ++i) poss_by_c[i].reserve(afcnts[i]);
+    for (int i = 0; i < a.size(); ++i) poss_by_c[a[i] - 'a'].push_back(i);
+    priority_queue<NearT> nears;
+    for (int i = 0; i < asz; ++i) {
+        if (!bfcnts[i]) continue;
+        cur_near[i] = NearT(i, afcnts[i] - bfcnts[i], poss_by_c[i][afcnts[i] - bfcnts[i]]);
+        nears.push(cur_near[i]);
+    }
+    int g_next_pos = 0;
+
+    for (char &bc: b) {
+        while (!nears.empty() && cur_near[nears.top().lid].gpos != nears.top().gpos) nears.pop();
+        for (int c = 0; c < asz; ++c) {
+            if (!bfcnts[c]) continue;
+            while (cposs[c] < afcnts[c] && poss_by_c[c][cposs[c]] < g_next_pos) ++cposs[c];
+            if (!nears.empty() && nears.top().gpos <= poss_by_c[c][cposs[c]] &&
+                (nears.top().gpos != poss_by_c[c][cposs[c]] || nears.top().lid != c))
+                continue;
+            bc = 'a' + c;
+            --bfcnts[c];
+            if (bfcnts[c]) cur_near[c] = NearT(c, afcnts[c] - bfcnts[c], poss_by_c[c][afcnts[c] - bfcnts[c]]);
+            else cur_near[c] = NearT(c, afcnts[c], a.size());
+            if (bfcnts[c]) nears.push(cur_near[c]);
+            g_next_pos = poss_by_c[c][cposs[c]] + 1;
+            break;
+        }
+    }
+    cout << b << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

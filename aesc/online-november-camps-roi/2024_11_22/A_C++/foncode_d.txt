@@ -1,0 +1,90 @@
+#pragma GCC optimize("Ofast")
+
+#include <iostream>
+#include <unordered_map>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace __gnu_pbds;
+using namespace std;
+using ll = int64_t;
+
+template<typename T, typename U>
+using ordered_map = tree<T, U, less<U>, rb_tree_tag, tree_order_statistics_node_update>;
+
+constexpr int maxn = 1e8;
+int n, q;
+
+// namespace DD {
+//     mt19937 rng(43364364);
+//     uniform_int_distribution<int> dist_y(-2e9, 2e9);
+//
+//     struct Node {
+//         int sz, y, val;
+//         Node *l = nullptr, *r = nullptr;
+//
+//         void init(int _val) {
+//             sz = 1;
+//             y = dist_y(rng);
+//             val = _val;
+//         }
+//     };
+//
+//     Node tree[maxn + 1];
+//     Node *zero_node = &(tree[0] = {0, 0, 0});
+// }
+
+ordered_map<int, int> id_by_pos;
+unordered_map<int, ordered_map<int, int>::iterator> it_by_id;
+
+void solve() {
+    cin >> n >> q;
+    int min_used_ppid = -1, max_used_ppid = n;
+    for (int i = 0; i < n; ++i) {
+        it_by_id.emplace(i + 1, id_by_pos.insert({i, i + 1}).first);
+    }
+    int pans = 0;
+    for (int _ = 0, t, x, y; _ < q; ++_) {
+        cin >> t;
+        if (t == 1) {
+            cin >> x >> y, x -= pans, y -= pans;
+            auto ibi_it = it_by_id.find(x);
+            auto ibp_it = ibi_it->second;
+            pans = id_by_pos.order_of_key(ibp_it->first) + 1;
+            cout << pans << "\n";
+            ibp_it->second = y;
+            it_by_id.erase(ibi_it);
+            it_by_id.emplace(ibp_it->second, ibp_it);
+        } else if (t == 2) {
+            cin >> x, x -= pans;
+            auto ibi_it = it_by_id.find(x);
+            auto ibp_it = ibi_it->second;
+            pans = id_by_pos.order_of_key(ibp_it->first) + 1;
+            cout << pans << "\n";
+            id_by_pos.erase(ibp_it);
+            ibi_it->second = id_by_pos.insert({--min_used_ppid, x}).first;
+        } else if (t == 3) {
+            cin >> x, x -= pans;
+            auto ibi_it = it_by_id.find(x);
+            auto ibp_it = ibi_it->second;
+            pans = id_by_pos.order_of_key(ibp_it->first) + 1;
+            cout << pans << "\n";
+            id_by_pos.erase(ibp_it);
+            ibi_it->second = id_by_pos.insert({++max_used_ppid, x}).first;
+        } else if (t == 4) {
+            cin >> x, x -= pans;
+            pans = id_by_pos.find_by_order(x - 1)->second;
+            cout << pans << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

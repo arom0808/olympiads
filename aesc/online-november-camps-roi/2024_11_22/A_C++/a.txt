@@ -1,0 +1,64 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+using ll = int64_t;
+
+constexpr ll maxn = 1005;
+ll n, m, k, s;
+ll as[maxn], bs[maxn];
+ll wins[maxn][maxn + 1], wins_pf[maxn][maxn + 2];
+
+ll cnt_if_add_t_wins(ll id, ll t) {
+    if (m <= s) return std::max<ll>(0, t - (s - m)) * as[0] + bs[id];
+    return wins_pf[id][m] - wins_pf[id][s] + as[0] * t + bs[id];
+}
+
+ll cnt_if_add_t_loses(ll id, ll t) {
+    if (s >= t + m) return bs[id];
+    if (s > t) return wins_pf[id][m] - wins_pf[id][s - t] + bs[id];
+    return wins_pf[id][m] + bs[id] + (t - s) * (k < n ? 0 : as[n - 1]);
+}
+
+void solve() {
+    cin >> n >> m >> k >> s;
+    for (ll i = 0; i < k; ++i) cin >> as[i];
+    for (ll i = 0; i < n; ++i) cin >> bs[i];
+    for (ll _ = 0; _ < m; ++_) {
+        for (ll i = 0, t; i < n; ++i) {
+            cin >> t, --t;
+            if (i < k) wins[t][_] = as[i];
+            else wins[t][_] = 0;
+        }
+    }
+    for (ll i = 0; i < n; ++i) {
+        sort(begin(wins[i]), begin(wins[i]) + m);
+        wins_pf[i][0] = 0;
+        for (ll j = 0; j < m; ++j) wins_pf[i][j + 1] = wins_pf[i][j] + wins[i][j];
+    }
+    ll q;
+    cin >> q;
+    for (ll _ = 0, u, v; _ < q; ++_) {
+        cin >> u >> v, --u, --v;
+        ll l = -1, r = 3e9;
+        while (r - l != 1) {
+            ll mid = (l + r) / 2;
+            ll rv = cnt_if_add_t_wins(v, mid), ru = cnt_if_add_t_loses(u, mid);
+            if (rv > ru) r = mid;
+            else l = mid;
+        }
+        cout << r << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

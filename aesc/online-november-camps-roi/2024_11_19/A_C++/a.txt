@@ -1,0 +1,93 @@
+#include <iostream>
+#include <array>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int maxn = 2e5;
+int n;
+array<int, 26> scnts[maxn];
+string strs[maxn];
+
+void count_str(const string &str, array<int, 26> &ccnts) {
+    ccnts.fill(0);
+    for (auto c: str) ++ccnts[c - 'a'];
+}
+
+int get_del_max_pref(const string &pstr, array<int, 26> &ccnts) {
+    int res = 0;
+    for (auto c: pstr) {
+        if (ccnts[c - 'a']) --ccnts[c - 'a'], ++res;
+        else break;
+    }
+    return res;
+}
+
+array<int, 26> temp_arr;
+
+bool find_swap_last_letters(string &cstr, int psz) {
+    temp_arr.fill(-1);
+    for (int i = cstr.size() - 1; i >= 0; --i) {
+        if (i < psz) {
+            for (int j = cstr[i] - 'a' + 1; j < 26; ++j) {
+                if (temp_arr[j] == -1) continue;
+                swap(cstr[i], cstr[temp_arr[j]]);
+                sort(cstr.begin() + i + 1, cstr.end());
+                return true;
+            }
+        }
+        temp_arr[cstr[i] - 'a'] = i;
+    }
+    return false;
+}
+
+bool find_bigger_letter(string &cstr, int psz, int plet) {
+    int mcid = -1;
+    for (int i = psz; i < static_cast<int>(cstr.size()); ++i)
+        if (cstr[i] > plet && (mcid == -1 || cstr[i] < cstr[mcid]))
+            mcid = i;
+    if (mcid == -1) return false;
+    swap(cstr[mcid], cstr[psz]);
+    sort(cstr.begin() + psz + 1, cstr.end());
+    return true;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> strs[i], sort(strs[i].begin(), strs[i].end()), count_str(strs[i], scnts[i]);
+    for (int i = 1; i < n; ++i) {
+        int pref_len = get_del_max_pref(strs[i - 1], scnts[i]);
+        if (pref_len == static_cast<int>(strs[i - 1].size()) &&
+            pref_len == static_cast<int>(strs[i].size()))
+            strs[i] = strs[i - 1];
+        else if (pref_len == static_cast<int>(strs[i - 1].size())) {
+            copy(strs[i - 1].begin(), strs[i - 1].end(), strs[i].begin());
+            for (int c = 0, nid = pref_len; c < 26; ++c) while (scnts[i][c]) strs[i][nid++] = c + 'a', --scnts[i][c];
+        } else if (pref_len == static_cast<int>(strs[i].size())) {
+            copy(strs[i - 1].begin(), strs[i - 1].begin() + pref_len, strs[i].begin());
+            if (!find_swap_last_letters(strs[i], pref_len)) {
+                cout << "-1\n";
+                return;
+            }
+        } else {
+            copy(strs[i - 1].begin(), strs[i - 1].begin() + pref_len, strs[i].begin());
+            for (int c = 0, nid = pref_len; c < 26; ++c) while (scnts[i][c]) strs[i][nid++] = c + 'a', --scnts[i][c];
+            if (!find_bigger_letter(strs[i], pref_len, strs[i - 1][pref_len]) &&
+                !find_swap_last_letters(strs[i], pref_len)) {
+                cout << "-1\n";
+                return;
+            }
+        }
+    }
+    for (int i = 0; i < n; ++i) cout << strs[i] << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

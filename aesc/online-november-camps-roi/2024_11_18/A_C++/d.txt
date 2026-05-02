@@ -1,0 +1,139 @@
+#pragma GCC optimize("Ofast,O3")
+//#pragma GCC target("avx2")
+
+#include <algorithm>
+#include <iostream>
+#include <array>
+
+
+using namespace std;
+using ll = int64_t;
+using ld = double;
+
+constexpr int maxn = 1e5;
+constexpr ld eps = 1e-19;
+int n, q;
+
+struct PV {
+    int x, y;
+
+    ll operator*(PV rhs) const {
+        return 1ll * x * rhs.x + 1ll * y * rhs.y;
+    }
+
+    ll operator^(PV rhs) const {
+        return 1ll * x * rhs.y - 1ll * rhs.x * y;
+    }
+
+    PV operator-(PV rhs) const {
+        return {x - rhs.x, y - rhs.y};
+    }
+
+    friend istream &operator>>(istream &is, PV &p) {
+        return is >> p.x >> p.y;
+    }
+};
+
+struct PVd {
+    ld x, y;
+
+    ld operator*(PVd rhs) const {
+        return x * rhs.x + y * rhs.y;
+    }
+
+    ld operator^(PVd rhs) const {
+        return x * rhs.y - rhs.x * y;
+    }
+
+    PVd operator-(PVd rhs) const {
+        return PVd{x - rhs.x, y - rhs.y};
+    }
+
+    PVd operator+(PVd rhs) const {
+        return PVd{x + rhs.x, y + rhs.y};
+    }
+
+    PVd operator/(ld koef) const {
+        return PVd{x / koef, y / koef};
+    }
+
+    PVd get_perp() const {
+        return PVd{y, -x};
+    }
+
+    explicit PVd(ld x = 0, ld y = 0) : x(x), y(y) {
+    };
+
+    PVd(PV p): x(p.x), y(p.y) {
+    }
+};
+
+PV points[maxn];
+
+bool proc1(PV p1, PV p2) {
+    PV dv = p2 - p1;
+    for (int i = 0; i < n; ++i)
+        if ((dv ^ (points[i] - p1)) <= 0)
+            return true;
+    return false;
+}
+
+inline int msign(ld val) {
+    if (std::abs(val) <= eps) return 0;
+    if (val < 0) return -1;
+    return 1;
+}
+
+array<PVd, 4> cps;
+array<int, 4> tss;
+array<PVd, 4> tpvs;
+
+bool proc2(PV rp1, PV rp2) {
+    PVd p1 = rp1, p2 = rp2;
+    PVd cp = (p1 + p2) / 2;
+    PVd dv1 = ((p2 - p1) / 2).get_perp();
+    cps[0] = p1;
+    cps[1] = cp + dv1;
+    cps[2] = p2;
+    cps[3] = cp - dv1;
+    for (int i = 0; i < n; ++i) {
+        tpvs[0] = cps[0] - points[i];
+        tpvs[1] = cps[1] - points[i];
+        tpvs[2] = cps[2] - points[i];
+        tpvs[3] = cps[3] - points[i];
+        tss[0] = msign(tpvs[0] ^ tpvs[1]);
+        tss[1] = msign(tpvs[1] ^ tpvs[2]);
+        tss[2] = msign(tpvs[2] ^ tpvs[3]);
+        tss[3] = msign(tpvs[3] ^ tpvs[0]);
+        bool ms = false, ps = false;
+        for (auto css: tss) ms |= css < 0, ps |= css > 0;
+        if (!(ms && ps)) return true;
+    }
+    return false;
+}
+
+bool uniproc(int t, PV p1, PV p2) {
+    if (t == 1) return proc1(p1, p2);
+    return proc2(p1, p2);
+}
+
+void solve() {
+    cin >> n >> q;
+    for (int i = 0; i < n; ++i) cin >> points[i];
+    PV p1, p2;
+    for (int i = 0, t; i < q; ++i) {
+        cin >> t >> p1 >> p2;
+        if (uniproc(t, p1, p2)) cout << "Yes\n";
+        else cout << "No\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

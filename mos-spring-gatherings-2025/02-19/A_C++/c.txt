@@ -1,0 +1,146 @@
+#include <iostream>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 1510;
+
+bool table[maxn][maxn];
+int pf[maxn][maxn];
+int n, m, k;
+ll ans = 0;
+
+int rect_sum(int i0, int j0, int i1, int j1) {
+    return pf[i1][j1] - pf[i0][j1] - pf[i1][j0] + pf[i0][j0];
+}
+
+int find_left_one(int j0, int f, int t, int rs, int cnt) {
+    int l = j0 - 1, r = rs;
+    while (r - l != 1) {
+        int mid = (l + r) / 2;
+        if (rect_sum(f, mid, t, rs) >= cnt) l = mid;
+        else r = mid;
+    }
+    return l;
+}
+
+pair<int, int> find_left_good(int j0, int f, int t, int rs, int cnt) {
+    return {find_left_one(j0, f, t, rs, cnt + 1), find_left_one(j0, f, t, rs, cnt)};
+}
+
+int find_up_one(int i0, int f, int t, int bs, int cnt) {
+    int l = i0 - 1, r = bs;
+    while (r - l != 1) {
+        int mid = (l + r) / 2;
+        if (rect_sum(mid, f, bs, t) >= cnt) l = mid;
+        else r = mid;
+    }
+    return l;
+}
+
+pair<int, int> find_up_good(int i0, int f, int t, int bs, int cnt) {
+    return {find_up_one(i0, f, t, bs, cnt + 1), find_up_one(i0, f, t, bs, cnt)};
+}
+
+int find_right_one(int j1, int f, int t, int rs, int cnt) {
+    int l = rs, r = j1 + 1;
+    while (r - l != 1) {
+        int mid = (l + r) / 2;
+        if (rect_sum(f, rs, t, mid) >= cnt) r = mid;
+        else l = mid;
+    }
+    return r;
+    // for (int i = rs + 1; i <= j1; ++i) if (rect_sum(f, rs, t, i) >= cnt) return i;
+    // return j1 + 1;
+}
+
+pair<int, int> find_right_good(int j1, int f, int t, int rs, int cnt) {
+    return {find_right_one(j1, f, t, rs, cnt), find_right_one(j1, f, t, rs, cnt + 1)};
+}
+
+int find_bottom_one(int i1, int f, int t, int bs, int cnt) {
+    int l = bs, r = i1 + 1;
+    while (r - l != 1) {
+        int mid = (l + r) / 2;
+        if (rect_sum(bs, f, mid, t) >= cnt) r = mid;
+        else l = mid;
+    }
+    return r;
+    // for (int i = bs + 1; i <= i1; ++i) if (rect_sum(bs, f, i, t) >= cnt) return i;
+    // return i1 + 1;
+}
+
+pair<int, int> find_bottom_good(int i1, int f, int t, int bs, int cnt) {
+    return {find_bottom_one(i1, f, t, bs, cnt), find_bottom_one(i1, f, t, bs, cnt + 1)};
+}
+
+void rec_split(int i0, int j0, int i1, int j1) {
+    if (i1 - i0 < 1 || j1 - j0 < 1) return;
+    if (i1 - i0 == 1 && j1 - j0 == 1) {
+        if (k == 0 && !table[i0][j0]) ++ans;
+        if (k == 1 && table[i0][j0]) ++ans;
+        return;
+    }
+    if (j1 - j0 >= i1 - i0) {
+        int right_start = (j0 + j1) / 2;
+        for (int f = i0; f < i1; ++f) {
+            for (int t = f + 1; t <= i1; ++t) {
+                for (int lcnt = 0; lcnt <= k; ++lcnt) {
+                    int rcnt = k - lcnt;
+                    auto l_borders = find_left_good(j0, f, t, right_start, lcnt);
+                    if (l_borders.first >= l_borders.second) continue;
+                    auto r_borders = find_right_good(j1, f, t, right_start, rcnt);
+                    if (r_borders.first >= r_borders.second) continue;
+                    ans += 1ll * (r_borders.second - r_borders.first) * (l_borders.second - l_borders.first);
+                }
+            }
+        }
+        rec_split(i0, j0, i1, right_start);
+        rec_split(i0, right_start, i1, j1);
+    } else {
+        int bottom_start = (i0 + i1) / 2;
+        for (int f = j0; f < j1; ++f) {
+            for (int t = f + 1; t <= j1; ++t) {
+                for (int ucnt = 0; ucnt <= k; ++ucnt) {
+                    int bcnt = k - ucnt;
+                    auto u_borders = find_up_good(i0, f, t, bottom_start, ucnt);
+                    if (u_borders.first >= u_borders.second) continue;
+                    auto b_borders = find_bottom_good(i1, f, t, bottom_start, bcnt);
+                    if (b_borders.first >= b_borders.second) continue;
+                    ans += 1ll * (u_borders.second - u_borders.first) * (b_borders.second - b_borders.first);
+                }
+            }
+        }
+        rec_split(i0, j0, bottom_start, j1);
+        rec_split(bottom_start, j0, i1, j1);
+    }
+}
+
+void solve() {
+    cin >> n >> m >> k;
+    char c;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            cin >> c;
+            table[i][j] = c == '1';
+        }
+    }
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            pf[i + 1][j + 1] = pf[i][j + 1] + pf[i + 1][j] - pf[i][j] + table[i][j];
+    rec_split(0, 0, n, m);
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

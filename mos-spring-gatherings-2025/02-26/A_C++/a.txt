@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int maxn = 1e5 + 10, inf = 2e9 + 100;
+
+int n, m;
+vector<pair<int, int> > g[maxn];
+multiset<int> weights[maxn];
+int color[maxn];
+
+bool dfs(int v, int c, int k) {
+    if (color[v] != -1) return color[v] == c;
+    color[v] = c;
+    for (auto [u,w]: g[v]) {
+        if (w >= k) break;
+        if (!dfs(u, 1 - c, k)) return false;
+    }
+    return true;
+}
+
+bool check_k(int k) {
+    for (int i = 0; i < n; ++i) color[i] = -1;
+    for (int v = 0; v < n; ++v) {
+        if (color[v] != -1) continue;
+        if (!dfs(v, 0, k)) return false;
+    }
+    return true;
+}
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) g[i].clear();
+    for (int i = 0; i < n; ++i) weights[i].clear();
+    for (int i = 0, u, v, w; i < m; ++i) {
+        cin >> u >> v >> w;
+        g[u].emplace_back(v, w), g[v].emplace_back(u, w);
+        weights[u].insert(w), weights[v].insert(w);
+    }
+    for (int i = 0; i < n; ++i) {
+        sort(g[i].begin(), g[i].end(), [](const pair<int, int> &a, const pair<int, int> &b) {
+            return a.second < b.second;
+        });
+    }
+    int ans = inf;
+    for (int v = 0; v < n; ++v) {
+        for (auto [u,w]: g[v]) {
+            weights[u].erase(weights[u].find(w));
+            if (!weights[u].empty()) ans = std::min(ans, w + (*weights[u].begin()));
+            weights[u].insert(w);
+        }
+    }
+    int l = 0, r = ans + 1;
+    while (r - l != 1) {
+        int mid = l + (r - l) / 2;
+        if (check_k(mid)) l = mid;
+        else r = mid;
+    }
+    if (l == inf) cout << "INF\n";
+    else cout << l << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    int t = 1;
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

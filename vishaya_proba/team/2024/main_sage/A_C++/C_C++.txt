@@ -1,0 +1,84 @@
+//#pragma GCC optimize("Ofast")
+//#pragma GCC optimize(O3)
+//#pragma GCC target("sse,sse2,sse3,ssse3,sse4,sse4.1,sse4.2,popcnt,abm,mmx,avx,avx2,tune=native")
+//#pragma GCC optimize("unroll-loops")
+//#pragma GCC optimize("unswitch-loops")
+//#pragma GCC optimize("function-sections")
+//#pragma GCC optimize("inline")
+
+#include <iostream>
+#include <cstdint>
+#include <algorithm>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+bool dfs(const vector<set<int32_t>> &g, vector<int32_t> &rm, vector<int32_t> &used, int32_t timer, int32_t v) {
+    if (used[v] == timer) return false;
+    used[v] = timer;
+    for (auto u: g[v]) {
+        if (rm[u] == -1) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    for (auto u: g[v]) {
+        if (dfs(g, rm, used, timer, rm[u])) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr), cout.tie(nullptr);
+    int32_t n;
+    cin >> n;
+    vector<vector<int32_t>> matrix(n, vector<int32_t>(n, 0));
+    for (int32_t i = 0; i < n; ++i) matrix[0][i] = i;
+    vector<set<int32_t>> g(n);
+    for (int32_t i = 0; i < n; ++i)
+        for (int32_t j = 0; j < i; ++j)
+            if (abs(i - j) > 1)
+                g[i].insert(j);
+    vector<int32_t> rm(n, -1), used(n, -1);
+    int32_t timer = 0;
+    for (int32_t i = 0; i + 1 < n; ++i) {
+        for (int32_t v = 0; v < n; ++v) {
+            if (dfs(g, rm, used, timer, v)) {
+                ++timer;
+            }
+        }
+        set<int32_t> unused_indices, unused_values;
+        for (int32_t j = 0; j < n; ++j) unused_indices.insert(j), unused_values.insert(j);
+        for (uint32_t j = 0; j < n; ++j) {
+            if (rm[matrix[i][j]] != -1) {
+                matrix[i + 1][j] = rm[matrix[i][j]];
+                unused_indices.erase(j);
+                unused_values.erase(rm[matrix[i][j]]);
+            }
+        }
+        for (auto it1 = unused_indices.begin(), it2 = unused_values.begin(); it1 != unused_indices.end();
+             ++it1, ++it2) {
+            matrix[i + 1][*it1] = *it2;
+        }
+        for (uint32_t j = 0; j < n; ++j) {
+            g[matrix[i][j]].erase(matrix[i + 1][j]);
+            g[matrix[i + 1][j]].erase(matrix[i][j]);
+            if (j > 0) {
+                g[matrix[i + 1][j]].erase(matrix[i + 1][j - 1]);
+                g[matrix[i + 1][j - 1]].erase(matrix[i + 1][j]);
+            }
+        }
+        rm.assign(n, -1);
+        ++timer;
+    }
+    for (auto &row: matrix) {
+        for (auto el: row) cout << el + 1 << " ";
+        cout << "\n";
+    }
+    return 0;
+}

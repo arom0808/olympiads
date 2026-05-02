@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 1e5;
+int n, m, q;
+vector<int> table[maxn];
+vector<int> rows[maxn];
+vector<int> cols[maxn];
+
+int pos_of_val(const vector<int> &vec, int val) {
+    return lower_bound(vec.begin(), vec.end(), val) - vec.begin();
+}
+
+int pos_of_val(int i, int j, int val) {
+    int row_pos = pos_of_val(rows[i], val);
+    if (row_pos == m || rows[i][row_pos] > table[i][j]) --row_pos;
+    return row_pos + pos_of_val(cols[j], val);
+}
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) {
+        table[i].resize(m);
+        for (auto &el: table[i]) cin >> el;
+        rows[i] = table[i];
+    }
+    for (int i = 0; i < m; ++i) cols[i].resize(n);
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) cols[j][i] = table[i][j];
+    for (int i = 0; i < n; ++i) sort(rows[i].begin(), rows[i].end());
+    for (int i = 0; i < m; ++i) sort(cols[i].begin(), cols[i].end());
+    cin >> q;
+    for (int _ = 0, i, j, k; _ < q; ++_) {
+        cin >> i >> j >> k, --k;
+        int l = 1, r = 1e9 + 1;
+        while (r - l != 1) {
+            int mid = (l + r) / 2;
+            if (pos_of_val(i, j, mid) > k) r = mid;
+            else l = mid;
+        }
+        cout << l << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

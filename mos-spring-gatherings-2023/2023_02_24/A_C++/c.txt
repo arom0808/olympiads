@@ -1,0 +1,49 @@
+#include <iostream>
+#include <map>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 610;
+int cnt_by_bad[maxn];
+// int max_cnt[max_mod * 2 + 1];
+map<int, int> max_cnt;
+map<int, int> upd_map;
+
+void solve() {
+    int m;
+    ll l;
+    cin >> m >> l;
+    for (int i = 0; i < 2 * m + 1; ++i) cin >> cnt_by_bad[i];
+    // for (int &val: max_cnt) val = -1;
+    max_cnt[0] = 0;
+    for (int i = -m; i <= m; ++i) {
+        upd_map.clear();
+        for (auto [start, scnt]: max_cnt) {
+            if (start > l) continue;
+            for (int cur_cnt = 1; cur_cnt <= cnt_by_bad[i + m]; ++cur_cnt) {
+                if (upd_map.contains(start + i * cur_cnt))
+                    upd_map[start + i * cur_cnt] = std::max(upd_map[start + i * cur_cnt], scnt + cur_cnt);
+                else upd_map[start + i * cur_cnt] = scnt + cur_cnt;
+            }
+        }
+        for (auto [val, cnt]: upd_map) {
+            if (max_cnt.contains(val)) max_cnt[val] = std::max(max_cnt[val], cnt);
+            else max_cnt[val] = cnt;
+        }
+    }
+    if (max_cnt.contains(l)) cout << max_cnt[l] << "\n";
+    else cout << "-1\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt","r",stdin);
+#endif
+    solve();
+    return 0;
+}

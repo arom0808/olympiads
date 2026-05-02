@@ -1,0 +1,74 @@
+#include <iostream>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 305;
+int n, m;
+bool table_colors[maxn][maxn];
+int table[maxn][maxn];
+ll pf[maxn][maxn];
+int ltz[maxn][maxn];
+
+void pf_init() {
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            pf[i + 1][j + 1] = pf[i][j + 1] + pf[i + 1][j] - pf[i][j] + table[i][j];
+}
+
+ll rect_sum(int i1, int j1, int i2, int j2) {
+    return pf[i2][j2] - pf[i1][j2] - pf[i2][j1] + pf[i1][j1];
+}
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) cin >> table[i][j];
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) cin >> table_colors[i][j];
+    pf_init();
+    for (int j = 0; j < m; ++j) {
+        int last_zero = -1;
+        for (int i = 0; i < n; ++i) {
+            if (i && table_colors[i][j] == table_colors[i - 1][j]) last_zero = i;
+            ltz[i][j] = last_zero;
+        }
+    }
+    ll bans = -1e18;
+    int bi1 = 0, bj1 = 0, bi2 = 0, bj2 = 0;
+    for (int i1 = 0; i1 < n; ++i1) {
+        for (int i2 = i1 + 1; i2 <= n; ++i2) {
+            int j2 = m;
+            ll j2s = rect_sum(i1, 0, i2, j2);
+            for (int j1 = m - 1; j1 >= 0; --j1) {
+                if (ltz[i2 - 1][j1] > i1) {
+                    j2 = j1;
+                    j2s = rect_sum(i1, 0, i2, j2);
+                } else if (j1 != m - 1 && table_colors[i1][j1] == table_colors[i1][j1 + 1]) {
+                    j2 = j1 + 1;
+                    j2s = rect_sum(i1, 0, i2, j2);
+                }
+                if (j1 != j2) {
+                    ll cans = j2s - rect_sum(i1, 0, i2, j1);
+                    if (cans > bans) {
+                        bans = cans;
+                        bi1 = i1, bj1 = j1, bi2 = i2, bj2 = j2;
+                    }
+                    if (rect_sum(i1, 0, i2, j1) > j2s) {
+                        j2 = j1;
+                        j2s = rect_sum(i1, 0, i2, j2);
+                    }
+                }
+            }
+        }
+    }
+    cout << bi1 << " " << bj1 << "\n" << bi2 - 1 << " " << bj2 - 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

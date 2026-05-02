@@ -1,0 +1,39 @@
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
+
+using namespace std;
+using ll = int64_t;
+ll n, m;
+ll ans = 0;
+
+void solve() {
+    cin >> n >> m;
+    ans = 0;
+    vector<ll> vals(n);
+    iota(vals.begin(), vals.end(), 0);
+    do {
+        for (int i = 0; i + 1 < n; ++i) {
+            if (vals[i] + 1 == vals[i + 1]) {
+                ++ans;
+                break;
+            }
+        }
+    } while (next_permutation(vals.begin(), vals.end()));
+    cout << ans % m << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

@@ -1,0 +1,113 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <numeric>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 2e5 + 10;
+
+struct DPE {
+    int free_cnt;
+    map<int, int> need_cnts;
+};
+
+int par[maxn];
+vector<int> g[maxn];
+bool start_money_ex[maxn];
+int start_money_cnt[maxn];
+int depth[maxn];
+int sz[maxn];
+DPE dp[maxn];
+int n;
+int order[maxn];
+
+
+void dfs1(int v, int d) {
+    sz[v] = 1;
+    start_money_cnt[v] = start_money_ex[v];
+    depth[v] = d;
+    for (auto u: g[v]) {
+        dfs1(u, d + 1);
+        start_money_cnt[v] += start_money_cnt[u];
+        sz[v] += sz[u];
+    }
+}
+
+bool check_ans(int ans_d) {
+    for (int i = 0; i < n; ++i) dp[i].free_cnt = 0, dp[i].need_cnts.clear();
+    int l = -1, r = n - 1;
+    while (r - l != 1) {
+        int m = (l + r) / 2;
+        if (depth[order[m]] > ans_d) l = m;
+        else r = m;
+    }
+    for (int _ = r; _ < n; ++_) {
+        auto v = order[_];
+        if (depth[v] == ans_d) {
+            dp[v].free_cnt = sz[v] - start_money_cnt[v];
+            dp[v].need_cnts.clear();
+            continue;
+        }
+        dp[v].free_cnt = 0;
+        if (!g[v].empty()) {
+            int su = g[v][0];
+            for (auto u: g[v]) if (dp[u].need_cnts.size() > dp[su].need_cnts.size()) su = u;
+            dp[v].need_cnts.swap(dp[su].need_cnts);
+            for (auto u: g[v]) {
+                dp[v].free_cnt += dp[u].free_cnt;
+                if (u == su) continue;
+                for (auto [d,cnt]: dp[u].need_cnts) dp[v].need_cnts[d] += cnt;
+            }
+        }
+        if (start_money_ex[v]) ++dp[v].need_cnts[depth[v]];
+        for (auto it = dp[v].need_cnts.rbegin(); it != dp[v].need_cnts.rend(); ++it) {
+            if (!dp[v].free_cnt) break;
+            auto &[d,cnt] = *it;
+            if (d - depth[v] >= depth[v]) return false;
+            int dc = std::min(cnt, dp[v].free_cnt);
+            dp[v].free_cnt -= dc;
+            cnt -= dc;
+        }
+        while (!dp[v].need_cnts.empty() && !dp[v].need_cnts.rbegin()->second)
+            dp[v].need_cnts.erase(prev(dp[v].need_cnts.end()));
+    }
+    return dp[0].need_cnts.empty();
+}
+
+void solve() {
+    int k;
+    cin >> n >> k;
+    par[0] = -1;
+    for (int i = 1, p; i < n; ++i) {
+        cin >> p, --p;
+        par[i] = p;
+        g[p].push_back(i);
+    }
+    for (int i = 0, v; i < k; ++i) {
+        cin >> v, --v;
+        start_money_ex[v] = true;
+    }
+    dfs1(0, 0);
+    iota(order, order + n, 0);
+    sort(order, order + n, [](int a, int b) { return depth[a] > depth[b]; });
+    int l = 0, r = *max_element(depth, depth + n) + 1;
+    while (r - l != 1) {
+        int m = (l + r) / 2;
+        if (check_ans(m)) l = m;
+        else r = m;
+    }
+    cout << l + 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

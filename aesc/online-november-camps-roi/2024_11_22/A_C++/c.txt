@@ -1,0 +1,122 @@
+#pragma GCC optimize("Ofast,O3")
+#pragma GCC target("avx2")
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+using ll = int64_t;
+
+
+constexpr int maxn = 3e5, inf = 1e9 + 1;
+int n, m;
+vector<pair<int, int> > g[maxn];
+int szs[maxn], head[maxn], ps[maxn], peid[maxn];
+int tin[maxn], tout[maxn];
+int ans[maxn];
+int timer = 0;
+
+namespace ST {
+    int tree[1 << 20];
+    int N = 1 << 19;
+
+    void init(int _size) {
+        for (int i = 1; i < N + _size; ++i) tree[i] = inf;
+    }
+
+    int get_min(int pos) {
+        pos += N;
+        int ans = tree[pos];
+        pos >>= 1;
+        while (pos) {
+            if (tree[pos] < ans) ans = tree[pos];
+            pos >>= 1;
+        }
+        return ans;
+    }
+
+    void set_min(int l, int r, int val) {
+        l += N, r += N;
+        while (l < r) {
+            if (l & 1) {
+                if (val < tree[l]) tree[l] = val;
+                ++l;
+            }
+            if (r & 1) {
+                --r;
+                if (val < tree[r]) tree[r] = val;
+            }
+            l >>= 1, r >>= 1;
+        }
+    }
+}
+
+void dfs1(int v, int p = -1) {
+    int sz = 1;
+    for (auto &ssp: g[v]) {
+        auto [u,eid] = ssp;
+        if (u == p) continue;
+        ps[u] = v, peid[u] = eid;
+        dfs1(u, v);
+        sz += szs[u];
+        if (szs[u] > szs[g[v][0].first]) swap(g[v][0], ssp);
+    }
+    szs[v] = sz;
+}
+
+void dfs2(int v, int p = -1) {
+    tin[v] = timer++;
+    for (auto [u,eid]: g[v]) {
+        if (u == p) continue;
+        head[u] = (u == g[v][0].first ? head[v] : u);
+        dfs2(u, v);
+    }
+    tout[v] = timer;
+}
+
+bool anc(int a, int b) {
+    return tin[a] <= tin[b] && tout[b] <= tout[a];
+}
+
+void min_eq_up(int &a, int &b, int l) {
+    while (!anc(head[a], b)) {
+        ST::set_min(tin[head[a]], tin[a] + 1, l);
+        a = ps[head[a]];
+    }
+}
+
+void req_set_min(int u, int v, int l) {
+    min_eq_up(v, u, l);
+    min_eq_up(u, v, l);
+    if (!anc(u, v)) swap(u, v);
+    ST::set_min(tin[u] + 1, tin[v] + 1, l);
+}
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0, u, v; i + 1 < n; ++i) {
+        cin >> u >> v, --u, --v;
+        g[u].emplace_back(v, i), g[v].emplace_back(u, i);
+    }
+    dfs1(0);
+    head[0] = 0;
+    dfs2(0);
+    ST::init(n);
+    for (int i = 0, u, v, l; i < m; ++i) {
+        cin >> u >> v >> l, --u, --v;
+        req_set_min(u, v, l);
+    }
+    for (int i = 1; i < n; ++i) ans[peid[i]] = ST::get_min(tin[i]);
+    for (int i = 0; i + 1 < n; ++i) cout << (ans[i] == inf ? -1 : ans[i]) << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

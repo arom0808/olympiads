@@ -1,0 +1,96 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+constexpr int maxn = 1e5 + 10;
+
+int d;
+
+int _rec_sol(int pos, int us, int lcnt, int sz, int arr[maxn]) {
+    if (pos == sz) {
+        if (us == d && lcnt == 0) return 0;
+        return 1e9;
+    }
+    if (us > d) return 1e9;
+    int ans = std::max(lcnt + arr[pos], _rec_sol(pos + 1, us + 1, 0, sz, arr));
+    ans = std::min(ans, _rec_sol(pos + 1, us, lcnt + arr[pos], sz, arr));
+    return ans;
+}
+
+int rec_sol(int sz, int arr[maxn]) {
+    if (sz < d) return 1e9;
+    return _rec_sol(0, 0, 0, sz, arr);
+}
+
+// int calc_dp_ans(int sz, int arr[maxn]) {
+//     vector dp(sz + 1, vector<int>(d + 1, 1e9));
+//     dp[0][0] = 0;
+//     for (int cnt = 1; cnt <= sz; ++cnt) {
+//         for (int dc = std::min(cnt, d); dc >= 1; --dc) {
+//             int cpc = 0;
+//             for (int pcnt = cnt - 1; pcnt >= 0; --pcnt) {
+//                 cpc += arr[pcnt];
+//                 dp[cnt][dc] = std::min(dp[cnt][dc], std::max(dp[pcnt][dc - 1], cpc));
+//             }
+//         }
+//     }
+//     return dp[sz][d];
+// }
+
+int n, m, g;
+int cols[maxn], rows[maxn];
+
+// bool check_can_cols(int mv) {
+//     if (n < d) return false;
+//     int ccnt = 0;
+//     int uc = 1;
+//     for (int i = 0; i < n; ++i) {
+//         if (cols[i] > mv) return false;
+//         if (cols[i] + ccnt > mv) {
+//             ++uc;
+//             ccnt = cols[i];
+//         } else ccnt += cols[i];
+//     }
+//     return uc <= d;
+// }
+//
+// bool check_can_rows(int mv) {
+//     if (m < d) return false;
+//     int ccnt = 0;
+//     int uc = 1;
+//     for (int i = 0; i < m; ++i) {
+//         if (rows[i] > mv) return false;
+//         if (rows[i] + ccnt > mv) {
+//             ++uc;
+//             ccnt = rows[i];
+//         } else ccnt += rows[i];
+//     }
+//     return uc <= d;
+// }
+
+void solve() {
+    cin >> n >> m >> d >> g;
+    for (int i = 0, x, y; i < g; ++i) {
+        cin >> x >> y, --x, --y;
+        ++cols[x], ++rows[y];
+    }
+    cout << std::min(rec_sol(n, cols), rec_sol(m, rows)) << "\n";
+    // int l = -1, r = g;
+    // while (r - l != 1) {
+    //     int mid = (l + r) >> 1;
+    //     if (check_can_cols(mid) || check_can_rows(mid)) r = mid;
+    //     else l = mid;
+    // }
+    // cout << r << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

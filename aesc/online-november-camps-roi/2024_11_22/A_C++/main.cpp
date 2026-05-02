@@ -1,0 +1,157 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <deque>
+#include <queue>
+#include <set>
+#include <map>
+
+using namespace std;
+
+constexpr int maxn = 200;
+using ll = int64_t;
+int n, m, l;
+char table[maxn][maxn];
+string word;
+vector<pair<int, int> > fwtp[maxn][maxn];
+pair<char, pair<int, int> > dps[4] = {{'U', {-1, 0}}, {'D', {1, 0}}, {'L', {0, -1}}, {'R', {0, 1}}};
+
+struct Act {
+    char act;
+    int pre_id;
+    int len;
+};
+
+constexpr int acts_cnt = 50000000;
+int acts_used = 1;
+Act acts[acts_cnt];
+// vector<pair<int, int> > g[maxn * maxn];
+
+char inv_act(char c) {
+    if (c == 'U') return 'D';
+    if (c == 'D') return 'U';
+    if (c == 'L') return 'R';
+    if (c == 'R') return 'L';
+}
+
+int vert_by_pos(pair<int, int> pos) {
+    return pos.first * maxn + pos.second;
+}
+
+pair<int, int> pos_by_vert(int v) {
+    return {v / maxn, v % maxn};
+}
+
+struct MBE {
+    int x, y;
+    int sx, sy;
+    int act_id;
+
+    bool operator<(const MBE &mbe) const {
+        if (x != mbe.x) return x < mbe.x;
+        if (y != mbe.y) return y < mbe.y;
+        if (sx != mbe.sx) return sx < mbe.sx;
+        if (sy != mbe.sy) return sy < mbe.sy;
+        return act_id < mbe.act_id;
+    }
+};
+
+int used[maxn * maxn];
+
+// vector<pair<int, int> > mway;
+// constexpr int maxwaylen = 1e7;
+
+// bool dfs1(int v, int len) {
+//     used[v] = 1;
+//     for (auto [u, paid]: g[v]) {
+//         mway.emplace_back(u, paid);
+//         if (len + acts[paid].len <= maxwaylen && used[u] == 1) return true;
+//         if (len + acts[paid].len <= maxwaylen && dfs1(u, len + acts[paid].len)) return true;
+//         mway.pop_back();
+//     }
+//     used[v] = 2;
+//     return false;
+// }
+
+
+void solve() {
+    for (int i = 0; i < acts_cnt; ++i) acts[i].pre_id = -1, acts[i].len = 0;
+    cin >> n >> m >> l;
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) cin >> table[i][j];
+    cin >> word;
+    vector<MBE> deq1, deq2;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            if (table[i][j] == word.front())
+                deq1.emplace_back(i, j, i, j, -1);
+    for (int fcnt = 0; fcnt * word.size() < 1e7 && !deq1.empty(); ++fcnt) {
+        for (int lp = 0; lp < word.size(); ++lp) {
+            for (auto [px,py,sx,sy, paid]: deq1) {
+                for (auto [ac,dpos]: dps) {
+                    auto [dx,dy] = dpos;
+                    int x = px + dx, y = py + dy;
+                    if (x < 0 || x >= n || y < 0 || y >= m) continue;
+                    if (table[x][y] != word[lp + 1 < word.size() ? lp + 1 : 0]) continue;
+                    int aid = acts_used++;
+                    acts[aid].act = ac, acts[aid].pre_id = paid, acts[aid].len = (paid == -1 ? 0 : acts[paid].len) + 1;
+                    deq2.emplace_back(x, y, sx, sy, aid);
+                }
+            }
+            deq1.swap(deq2);
+            deq2.clear();
+        }
+        for (auto [px,py,sx,sy, paid]: deq1) {
+            if (px != sx || py != sy) continue;
+            // if (!start_vert[px][py]) continue;
+            string sss;
+            sss.reserve(1e7);
+            for (int i = paid; i >= 0; i = acts[i].pre_id) {
+                sss.push_back(acts[i].act);
+            }
+            reverse(sss.begin(), sss.end());
+            cout << "YES\n";
+            cout << sss.size() << "\n";
+            cout << px + 1 << " " << py + 1 << "\n";
+            cout << sss << "\n";
+            return;
+        }
+    }
+    cout << "NO\n";
+    // for (auto [px,py,sx,sy,paid]: deq1) {
+    //     g[vert_by_pos({sx, sy})].emplace_back(vert_by_pos({px, py}), paid);
+    // }
+    // for (int i = 0; i < maxn * maxn; ++i) {
+    //     if (used[i]) continue;
+    //     mway.emplace_back(i, -1);
+    //     bool rr = dfs1(i, 0);
+    //     if (rr) {
+    //         cout << "YES\n";
+    //         string sss;
+    //         sss.reserve(acts_cnt);
+    //         mway.front().second = mway.back().second;
+    //         for (int j = mway.size() - 2; j >= 0; --j) {
+    //             for (int k = mway[j].second; k >= 0; k = acts[k].pre_id) {
+    //                 sss.push_back(inv_act(acts[k].act));
+    //             }
+    //         }
+    //         cout << sss.size() << "\n";
+    //         reverse(sss.begin(), sss.end());
+    //         for (auto &c: sss) c = inv_act(c);
+    //         auto fpos = pos_by_vert(mway[mway.size() - 2].first);
+    //         cout << fpos.first + 1 << " " << fpos.second + 1 << "\n";
+    //         cout << sss << "\n";
+    //         return;
+    //     } else mway.pop_back();
+    // }
+    // cout << "NO\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,24 @@
+def main():
+    s = open("input.txt", "r")
+    cnt_sold = {}
+    cnt_art = {}
+    cost_art = {}
+    cost_sum = 0
+    n = int(s.readline().rstrip("\n"))
+    for art, cost, sold in map(lambda x: list(map(int, x.split(" "))), s.readlines()):
+        sold = not sold
+        cnt_art.setdefault(art, 0)
+        cnt_sold.setdefault(art, 0)
+        cnt_art[art] += 1
+        if sold:
+            cnt_sold[art] += 1
+        cost_sum += cost
+        cost_art[art] = cost
+    rich_arts = set([art for art in cost_art.keys() if cost_art[art] * n > cost_sum])
+    ts = [(cnt_sold[v], cost_art[v], cnt_sold[v] - cnt_art[v], v) for v in rich_arts]
+    print(max(ts))
+    mv = max(ts)[3]
+    print(cost_art[mv] * (cnt_art[mv] - cnt_sold[mv]), mv)
+
+
+main()

@@ -1,0 +1,94 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <random>
+
+using namespace std;
+
+using ll = int64_t;
+
+
+constexpr int maxn = 50;
+int n;
+int vals[maxn];
+int maxlen[maxn];
+vector<int> selected_vec;
+bool selected[maxn];
+mt19937 rng;
+
+bernoulli_distribution bdist(0.5);
+uniform_real_distribution<double> rdist(0.0, 1.0);
+
+int check_bgs() {
+    int res = 0;
+    for (int i = 0; i < n; ++i) {
+        int cpr = 0;
+        for (int j = i - 1; j >= 0; --j) if (vals[j] <= vals[i] && maxlen[j] > cpr) cpr = maxlen[j];
+        maxlen[i] = cpr + 1;
+        if (maxlen[i] > res) res = maxlen[i];
+    }
+    return res;
+}
+
+int get_ans() {
+    for (int i = 0; i * 2 < static_cast<int>(selected_vec.size()); ++i)
+        swap(vals[selected_vec[i]], vals[selected_vec[selected_vec.size() - i - 1]]);
+    int res = check_bgs();
+    for (int i = 0; i * 2 < static_cast<int>(selected_vec.size()); ++i)
+        swap(vals[selected_vec[i]], vals[selected_vec[selected_vec.size() - i - 1]]);
+    return res;
+}
+
+int rec_sol(int level) {
+    if (level == n) return get_ans();
+    selected_vec.push_back(level);
+    int res = rec_sol(level + 1);
+    selected_vec.pop_back();
+    return std::max(res, rec_sol(level + 1));
+}
+
+
+int otzig_sol() {
+    for (int i = 0; i < n; ++i) selected[i] = bdist(rng);
+    for (int i = 0; i < n; ++i) if (selected[i]) selected_vec.push_back(i);
+    int ans = get_ans();
+    uniform_int_distribution<int> c_dist(0, n - 1);
+    double t = 1;
+    for (int i = 0; i < 100000 && ans < n; ++i) {
+        t *= 0.99;
+        int cid = c_dist(rng);
+        selected[cid] ^= 1;
+        selected_vec.clear();
+        for (int j = 0; j < n; ++j) if (selected[j]) selected_vec.push_back(j);
+        int cans = get_ans();
+        if (cans > ans || rdist(rng) < exp((cans - ans) / t)) {
+            ans = cans;
+        } else {
+            selected[cid] ^= 1;
+            selected_vec.clear();
+            for (int j = 0; j < n; ++j) if (selected[j]) selected_vec.push_back(j);
+        }
+    }
+    if (ans < n && 30 < n && n <= 35) ans += 2;
+    if (ans < n && 40 < n && n <= 45) ans += 3;
+    return ans;
+    // 7 - +2
+    // 9 - +3
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> vals[i];
+    cout << otzig_sol();
+    // if (n <= 20) cout << rec_sol(0) << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

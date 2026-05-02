@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <algorithm>
+#include <set>
+
+using namespace std;
+
+const int32_t maxn = 1 << 9;
+int32_t k, n;
+
+int32_t table[maxn][maxn];
+vector<int32_t> g[maxn];
+int32_t rm[maxn];
+int32_t used[maxn];
+int32_t timer;
+
+bool dfs(int32_t v) {
+    if (used[v] == timer) return false;
+    used[v] = timer;
+    for (auto u: g[v]) {
+        if (rm[u] == -1) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    for (auto u: g[v]) {
+        if (dfs(rm[u])) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
+
+int main() {
+    cin >> k;
+    n = 1 << k;
+    for (int32_t i = 0; i < n; ++i) table[0][i] = i;
+    for (int32_t i = 1; i < n; ++i) table[i][0] = n + i - 1;
+    set<int32_t> av_ns;
+
+    for (int32_t i = 1; i < n; ++i) {
+        for (int32_t j = 0; j < 2 * n - 1; ++j) av_ns.insert(j);
+        for (int32_t j = 0; j < i; ++j) av_ns.erase(table[i][j]), av_ns.erase(table[j][i]);
+
+        for (int32_t j = i; j < n; ++j) {
+
+        }
+    }
+}

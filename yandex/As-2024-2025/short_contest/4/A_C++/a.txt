@@ -1,0 +1,27 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+    int64_t m;
+    cin >> m;
+    vector<int64_t> arr(m);
+    for (auto &el: arr) cin >> el;
+    int64_t all_days_cnt = 0;
+    for (auto el: arr) all_days_cnt += el;
+    int64_t fd = all_days_cnt / 2 + 1;
+    int64_t cstart = 1, cid = 0;
+    for (; cid < m; cstart += arr[cid], ++cid) if (fd < cstart + arr[cid]) break;
+    cout << cid + 1 << " " << fd - cstart + 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,36 @@
+from functools import cmp_to_key
+
+
+def cmp(s1, s2):
+    id1, marks1 = s1[0], s1[1:]
+    id2, marks2 = s2[0], s2[1:]
+    sdal1 = 2 not in marks1
+    sdal2 = 2 not in marks2
+    if sdal1 != sdal2:
+        return -1 if sdal1 else 1
+    if sdal1:
+        if sum(marks1) != sum(marks2):
+            return -1 if sum(marks1) > sum(marks2) else 1
+        return -1 if id1 < id2 else 1
+    tc1 = len([v for v in marks1 if v == 2])
+    tc2 = len([v for v in marks2 if v == 2])
+    if tc1 != tc2:
+        return -1 if tc1 < tc2 else 1
+    return -1 if id1 < id2 else 1
+
+
+def main():
+    s = open("input.txt", "r")
+    n = int(s.readline().rstrip("\n"))
+    students = [list(map(int, v.split())) for v in s.readlines()]
+    students.sort(key=cmp_to_key(cmp))
+    print(n)
+    print(len(students))
+    print(students[1])
+    for st in students:
+        if len([v for v in st[1:] if v == 2]) > 2:
+            print(st)
+            break
+
+
+main()

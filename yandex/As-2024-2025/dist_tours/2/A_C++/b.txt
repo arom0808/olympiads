@@ -1,0 +1,90 @@
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+constexpr int maxn = 1 << 21;
+int n;
+int arr[maxn];
+int val_in[maxn];
+int val_in_timer = 0;
+
+int stupid_solve_for_arr(int n) {
+    int ans = 0;
+    for (int start = 0; start < (1 << n); ++start) {
+        for (int end = start + 1; end <= (1 << n); ++end) {
+            bool ok = false;
+            for (int swap1 = 0; swap1 < (1 << n) && !ok; ++swap1) {
+                for (int swap2 = swap1 + 1; swap2 < (1 << n) && !ok; ++swap2) {
+                    swap(arr[swap1], arr[swap2]);
+                    int xor_val = (1 << n) - 1;
+                    for (int i = start; i < end; ++i) xor_val ^= arr[i];
+                    if (xor_val == 0) ok = true;
+                    swap(arr[swap1], arr[swap2]);
+                }
+            }
+            if (ok) ++ans;
+        }
+    }
+    return ans;
+}
+
+
+int solve_for_arr(int n) {
+    int ans = 0;
+    for (int start = 0; start < (1 << n); ++start) {
+        int arr_xor = (1 << n) - 1;
+        ++val_in_timer;
+        for (int end = start + 1; end <= (1 << n); ++end) {
+            arr_xor ^= arr[end - 1];
+            val_in[arr[end - 1]] = val_in_timer;
+            if (!arr_xor && (end - start >= 2 || (1 << n) - (end - start) >= 2)) {
+                ++ans;
+                continue;
+            }
+            for (int i = start; i < end; ++i) {
+                if (val_in[arr_xor ^ arr[i]] != val_in_timer) {
+                    ++ans;
+                    break;
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < (1 << n); ++i) cin >> arr[i];
+    cout << solve_for_arr(n) << "\n";
+    // cout << stupid_solve_for_arr(n) << "\n";
+    // n = 2;
+    // iota(begin(arr), next(begin(arr), 1 << n), 0);
+    // set<int> vals;
+    // do {
+    // if (solve_for_arr(n) != stupid_solve_for_arr(n)) {
+    // for (int i = 0; i < (1 << n); ++i) cout << arr[i];
+    // cout << "\n";
+    // return;
+    // }
+    // vals.insert(solve_for_arr(n));
+    // } while (next_permutation(begin(arr), next(begin(arr), 1 << n)));
+    // for (auto val: vals) cout << val << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

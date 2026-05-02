@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 5e5 + 10;
+int vals[maxn * 2];
+int n;
+ll changes[maxn];
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> vals[i];
+    for (int i = 0; i < n; ++i) vals[i + n] = vals[i];
+    vector<pair<int, int> > st;
+    for (int i = 2 * n - 1; i >= 0; --i) {
+        while (!st.empty() && st.back().first >= vals[i]) st.pop_back();
+        int cv = vals[i];
+        if (i < n) {
+            for (int j = st.size() - 1; j >= 0; --j) {
+                auto [val,pos] = st[j];
+                if (pos - i > n) break;
+                changes[pos - i] += cv - val;
+                cv = val;
+            }
+        }
+        st.emplace_back(vals[i], i);
+    }
+    ll ans = 0;
+    for (int i = 0; i < n; ++i) ans += vals[i];
+    for (int i = 1; i <= n; ++i) {
+        ans -= changes[i];
+        cout << ans << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

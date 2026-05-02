@@ -1,0 +1,63 @@
+#include <iostream>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 2e5 + 10, mod = 1e9 + 7;
+int n;
+int facts[maxn];
+int inv_facts[maxn];
+
+int bin_pow(int x, int p) {
+    int ans = 1;
+    while (p) {
+        if (p & 1) ans = (1ll * ans * x) % mod;
+        x = (1ll * x * x) % mod;
+        p >>= 1;
+    }
+    return ans;
+}
+
+int inv(int x) {
+    return bin_pow(x, mod - 2);
+}
+
+void init_facts() {
+    facts[0] = 1;
+    for (int i = 1; i < maxn; ++i) facts[i] = (1ll * facts[i - 1] * i) % mod;
+    inv_facts[maxn - 1] = inv(facts[maxn - 1]);
+    for (int i = maxn - 2; i >= 0; --i) inv_facts[i] = (1ll * inv_facts[i + 1] * (i + 1)) % mod;
+}
+
+int C(int n, int k) {
+    return (((1ll * facts[n] * inv_facts[k]) % mod) * inv_facts[n - k]) % mod;
+}
+
+int solve_for_arr(int arr[maxn]) {
+    int ans = 0;
+    for (int i = 0; i < n; ++i) ans = (ans + ((1ll * C(n - 1, i) * arr[i]) % mod)) % mod;
+    return ans;
+}
+
+int va[maxn], vb[maxn];
+
+void solve() {
+    init_facts();
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        if (i & 1) cin >> vb[i >> 1];
+        else cin >> va[i >> 1];
+    }
+    n >>= 1;
+    cout << solve_for_arr(va) << " " << solve_for_arr(vb);
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,82 @@
+#include <iostream>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 100, mod = 1e9 + 7, maxval = 1000;
+
+template<typename T>
+T mceil(T a, T b) {
+    return (a + b - 1) / b;
+}
+
+int as[maxn], bs[maxn], arr[maxn];
+int pf_max[maxn], sf_max[maxn];
+int pf_cnt_when_max[maxn][maxval + 1], sf_cnt_when_max[maxn][maxval + 1], sf_cnt_max_beq[maxn][maxval + 1];
+int n;
+ll ans = 0;
+
+void rec_sol(int level) {
+    if (level == n) {
+        pf_max[0] = arr[0], sf_max[n - 1] = arr[n - 1];
+        for (int i = 1; i < n; ++i) pf_max[i] = std::max(pf_max[i - 1], arr[i]);
+        for (int i = n - 2; i >= 0; --i) sf_max[i] = std::max(sf_max[i + 1], arr[i]);
+        for (int i = 1; i + 1 < n; ++i) {
+            ans = (ans + std::max(std::min(pf_max[i - 1], sf_max[i + 1]) - arr[i], 0)) % mod;
+        }
+        return;
+    }
+    arr[level] = as[level];
+    rec_sol(level + 1);
+    arr[level] = bs[level];
+    rec_sol(level + 1);
+}
+
+void second_group_sol() {
+    pf_cnt_when_max[0][as[0]] = 1, pf_cnt_when_max[0][bs[0]] = 1;
+    sf_cnt_when_max[n - 1][as[n - 1]] = 1, sf_cnt_when_max[n - 1][bs[n - 1]] = 1;
+    for (int i = 1, ri = n - 2; i < n; ++i, --ri) {
+        for (int tval = as[i], _ = 0; _ < 2; tval = bs[i], ++_) {
+            for (int j = 0; j <= tval; ++j) {
+                pf_cnt_when_max[i][tval] = (pf_cnt_when_max[i][tval] + pf_cnt_when_max[i - 1][j]) % mod;
+                sf_cnt_when_max[ri][tval] = (sf_cnt_when_max[ri][tval] + sf_cnt_when_max[ri + 1][j]) % mod;
+            }
+            for (int j = tval + 1; j <= maxval; ++j) {
+                pf_cnt_when_max[i][j] = (pf_cnt_when_max[i][j] + pf_cnt_when_max[i - 1][j]) % mod;
+                sf_cnt_when_max[ri][j] = (sf_cnt_when_max[ri][j] + sf_cnt_when_max[ri + 1][j]) % mod;
+            }
+        }
+    }
+    for (int i = 0; i < n; ++i) {
+        sf_cnt_max_beq[i][maxval] = sf_cnt_when_max[i][maxval];
+        for (int j = maxval - 1; j >= 0; --j) {
+            sf_cnt_max_beq[i][j] = (sf_cnt_max_beq[i][j + 1] + sf_cnt_when_max[i][j]) % mod;
+        }
+    }
+    for (int i = 1; i + 1 < n; ++i) {
+        for (int tval = as[i], _ = 0; _ < 2; tval = bs[i], ++_) {
+            for (int mh = tval + 1; mh <= maxval; ++mh) {
+                ans += (1ll * pf_cnt_when_max[i - 1][mh] * sf_cnt_max_beq[i + 1][mh]) % mod * (mh - tval) % mod;
+            }
+        }
+    }
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> as[i];
+    for (int i = 0; i < n; ++i) cin >> bs[i];
+    // rec_sol(0);
+    second_group_sol();
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

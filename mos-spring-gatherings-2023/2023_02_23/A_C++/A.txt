@@ -1,0 +1,113 @@
+#include <iostream>
+#include <random>
+#include <algorithm>
+#include <set>
+#include <map>
+
+using namespace std;
+
+constexpr int maxcoord = 1000;
+constexpr int maxn = maxcoord;
+
+mt19937 rng(445233);
+uniform_int_distribution<int> dist_coord(0, maxcoord - 1);
+
+inline int rand_coord() {
+    return dist_coord(rng);
+}
+
+inline pair<int, int> rand_pos() {
+    return {rand_coord(), rand_coord()};
+}
+
+map<pair<int, int>, bool> cache;
+
+set<pair<int, int> > shifts;
+vector<pair<int, int> > good_points;
+
+bool ask(int x, int y) {
+    auto it = cache.find(make_pair(x, y));
+    if (it != cache.end()) return it->second;
+    cout << "? " << x + 1 << " " << y + 1 << "\n";
+    cout.flush();
+    int res;
+    cin >> res;
+    if (res == -1) exit(-1);
+    cache.emplace(make_pair(x, y), res);
+    return res;
+}
+
+int my_sqrt(int val) {
+    int l = -1, r = val;
+    while (r - l != 1) {
+        int m = (l + r) / 2;
+        if (1ll * m * m >= val) r = m;
+        else l = m;
+    }
+    return r;
+}
+
+void init_shifts() {
+    for (int a = 0; a < maxcoord; ++a) {
+        for (int b = 0; b < maxcoord; ++b) {
+            int c = my_sqrt(a * a + b * b);
+            if (c * c == a * a + b * b) {
+                shifts.emplace(a, b);
+                shifts.emplace(a, -b);
+                shifts.emplace(-a, b);
+                shifts.emplace(-a, -b);
+            }
+        }
+    }
+}
+
+void solve() {
+    int q;
+    cin >> q;
+    init_shifts();
+    while (true) {
+        int x = rand_coord();
+        // auto [x,y] = rand_pos();
+        auto y = x;
+        if (!ask(x, y)) continue;
+        for (auto [sx, sy]: shifts)
+            if (x + sx >= 0 && x + sx < maxcoord && y + sy >= 0 && y + sy < maxcoord)
+                good_points.emplace_back(x + sx, y + sy);
+        break;
+    }
+    sort(good_points.begin(), good_points.end());
+    while (good_points.size() != 1) {
+        int bx = 0, by = 0, bres = good_points.size();
+        for (int _ = 0; _ < 100; ++_) {
+            auto [x,y] = rand_pos();
+            int eq_ps_cnt = 0;
+            for (auto [gx,gy]: good_points)
+                if (shifts.contains(make_pair(gx - x, gy - y)))
+                    ++eq_ps_cnt;
+            int fr = std::abs(static_cast<int>(good_points.size() - 2 * eq_ps_cnt));
+            if (fr < bres) bx = x, by = y, bres = fr;
+        }
+        if (bres == good_points.size()) continue;
+        if (ask(bx, by)) {
+            erase_if(good_points, [bx,by](pair<int, int> pos) {
+                return !shifts.contains(make_pair(pos.first - bx, pos.second - by));
+            });
+        } else {
+            erase_if(good_points, [bx,by](pair<int, int> pos) {
+                return shifts.contains(make_pair(pos.first - bx, pos.second - by));
+            });
+        }
+    }
+    auto [x,y] = good_points.front();
+    cout << "! " << x + 1 << " " << y + 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    // #ifdef LOCAL
+    // freopen("input.txt", "r",stdin);
+    // freopen("output.txt", "w",stdout);
+    // #endif
+    solve();
+    return 0;
+}

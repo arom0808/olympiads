@@ -1,0 +1,168 @@
+#ifndef LOCAL
+#pragma GCC optimize("Ofast")
+#endif
+
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <set>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 2e5 + 10, inf = 2e9 + 10;
+
+struct Ship {
+    int x, y, d, id;
+
+    friend istream &operator>>(istream &is, Ship &ship) {
+        char c;
+        is >> ship.x >> ship.y >> c;
+        if (c == 'N') ship.d = 2;
+        else if (c == 'E') ship.d = 1;
+        else if (c == 'S') ship.d = 0;
+        else ship.d = 3;
+        return is;
+    }
+
+    bool operator<(const Ship &other) const {
+        if (x != other.x) return x < other.x;
+        return y < other.y;
+    }
+};
+
+struct QueEl {
+    int dt, lid, v, u;
+
+    bool operator<(const QueEl &rhs) const {
+        if (dt != rhs.dt) return dt < rhs.dt;
+        if (v != rhs.v) return v < rhs.v;
+        return u < rhs.u;
+    }
+};
+
+int n;
+Ship ships[maxn];
+map<int, set<int> > lines[6];
+bool erased[maxn];
+
+bool is_on_line(int v, int lid) {
+    int d = ships[v].d;
+    if (lid == 0) return d == 1 || d == 3;
+    if (lid == 1) return d == 0 || d == 2;
+    if (lid == 2) return d == 2 || d == 3;
+    if (lid == 3) return d == 0 || d == 1;
+    if (lid == 4) return d == 0 || d == 3;
+    return d == 1 || d == 2;
+}
+
+int get_line_par_id(int v, int lid) {
+    auto [x,y,d,_] = ships[v];
+    if (lid == 0) return y;
+    if (lid == 1) return x;
+    if (lid == 2) return x + y;
+    if (lid == 3) return x + y;
+    if (lid == 4) return x - y;
+    return x - y;
+}
+
+void add_to_lines(int v) {
+    for (int i = 0; i < 6; ++i) if (is_on_line(v, i)) lines[i][get_line_par_id(v, i)].insert(v);
+}
+
+void erase_from_lines(int v) {
+    for (int i = 0; i < 6; ++i) if (is_on_line(v, i)) lines[i][get_line_par_id(v, i)].erase(v);
+}
+
+bool brace_type(int v, int lid) {
+    int d = ships[v].d;
+    if (lid == 0) return d == 3;
+    if (lid == 1) return d == 2;
+    if (lid == 2) return d == 3;
+    if (lid == 3) return d == 0;
+    if (lid == 4) return d == 3;
+    return d == 2;
+}
+
+int dist(int lid, int v, int u) {
+    if (lid == 0) return std::abs(ships[v].x - ships[u].x) / 2;
+    if (lid == 1) return std::abs(ships[v].y - ships[u].y) / 2;
+    return std::abs(ships[v].x - ships[u].x);
+}
+
+set<QueEl> que;
+
+void add_to_que_after_erase(int lid, int u) {
+    int par_id = get_line_par_id(u, lid);
+    const auto &cl = lines[lid][par_id];
+    auto it1 = cl.lower_bound(u);
+    if (it1 == cl.begin() || it1 == cl.end()) return;
+    int v = *prev(it1);
+    u = *it1;
+    if (!brace_type(v, lid) && brace_type(u, lid)) que.emplace(dist(lid, v, u), lid, v, u);
+}
+
+bool check_and_remake_que_el(set<QueEl>::iterator it) {
+    auto [dt,lid,v,u] = *it;
+    if (!erased[v] && !erased[u]) return true;
+    que.erase(it);
+    add_to_que_after_erase(lid, u);
+    return false;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> ships[i], ships[i].id = i;
+    sort(ships, ships + n);
+    for (int i = 0; i < n; ++i) add_to_lines(i);
+    for (int lid = 0; lid < 6; ++lid) {
+        for (const auto &[par_id, pids]: lines[lid]) {
+            if (pids.size() < 2) continue;
+            for (auto it1 = pids.begin(), it2 = next(it1); it2 != pids.end(); ++it1, ++it2) {
+                auto v = *it1, u = *it2;
+                if (!brace_type(v, lid) && brace_type(u, lid))
+                    que.emplace(dist(lid, v, u), lid, v, u);
+            }
+        }
+    }
+    vector<pair<int, int> > to_erase;
+    while (!que.empty()) {
+        while (!que.empty() && !check_and_remake_que_el(que.begin()));
+        if (que.empty()) break;
+        auto [dt,lid,v,u] = *que.begin();
+        que.erase(que.begin());
+        to_erase.clear();
+        to_erase.emplace_back(v, lid);
+        to_erase.emplace_back(u, lid);
+        while (!que.empty() && que.begin()->dt == dt && que.begin()->v == v) {
+            while (!que.empty() && !check_and_remake_que_el(que.begin()));
+            if (!que.empty() && que.begin()->dt == dt && que.begin()->v == v) {
+                to_erase.emplace_back(que.begin()->u, que.begin()->lid);
+                que.erase(que.begin());
+            }
+        }
+        sort(to_erase.begin(), to_erase.end());
+        to_erase.erase(unique(to_erase.begin(), to_erase.end()), to_erase.end());
+        for (auto [i,clid]: to_erase) {
+            erase_from_lines(i);
+            erased[i] = true;
+        }
+        for (auto [i,clid]: to_erase) {
+            add_to_que_after_erase(clid, i);
+        }
+    }
+    for (int i = 0; i < n; ++i) if (!erased[i]) cout << ships[i].id + 1 << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}

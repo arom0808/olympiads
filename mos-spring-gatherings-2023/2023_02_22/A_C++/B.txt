@@ -1,0 +1,108 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+constexpr int maxn = 1e6 + 5;
+
+vector<int> primes;
+int mdiv[maxn];
+
+void init_erat() {
+    mdiv[1] = 1;
+    for (int i = 2; i < maxn; ++i) {
+        if (!mdiv[i]) primes.push_back(mdiv[i] = i);
+        for (auto p: primes) {
+            if (p > mdiv[i] || 1ll * p * i >= maxn) break;
+            mdiv[p * i] = p;
+        }
+    }
+}
+
+set<int> nums_by_div[maxn];
+// int near_right[maxn];
+int n;
+bool enabled[maxn];
+
+namespace ST {
+    int tree[maxn * 2];
+    int mn;
+
+    void init() {
+        mn = n + 1;
+        for (int i = 0; i < mn * 2; ++i) tree[i] = mn;
+    }
+
+    void set_val(int pos, int val) {
+        pos += mn;
+        tree[pos] = val;
+        for (pos >>= 1; pos; pos >>= 1) tree[pos] = std::min(tree[pos << 1], tree[pos << 1 | 1]);
+    }
+
+    void set_min(int pos, int val) {
+        if (val < tree[pos + mn]) set_val(pos, val);
+    }
+
+    int get_min(int l, int r) {
+        l += mn, r += mn;
+        int ans = mn;
+        while (l < r) {
+            if (l & 1) ans = std::min(ans, tree[l++]);
+            if (r & 1) ans = std::min(ans, tree[--r]);
+            l >>= 1, r >>= 1;
+        }
+        return ans;
+    }
+}
+
+void upd_near(int x) {
+    ST::set_val(x, n + 1);
+    for (int cv = x, d = mdiv[cv]; cv != 1; cv /= d, d = mdiv[cv]) {
+        auto it = nums_by_div[d].upper_bound(x);
+        if (it != nums_by_div[d].end()) ST::set_min(x, *it);
+    }
+}
+
+void solve() {
+    init_erat();
+    int q;
+    cin >> n >> q;
+    ST::init();
+    // for (int i = 1; i <= n; ++i) near_right[i] = n + 1;
+    for (int _ = 0, x, l, r; _ < q; ++_) {
+        char c;
+        cin >> c;
+        if (c == 'S') {
+            cin >> x;
+            if (!enabled[x]) {
+                for (int cv = x, d = mdiv[cv]; cv != 1; cv /= d, d = mdiv[cv]) {
+                    auto it = nums_by_div[d].insert(x).first;
+                    if (it != nums_by_div[d].begin()) ST::set_min(*prev(it), x);
+                    if (next(it) != nums_by_div[d].end()) ST::set_min(x, *next(it));
+                }
+            } else {
+                for (int cv = x, d = mdiv[cv]; cv != 1; cv /= d, d = mdiv[cv]) {
+                    nums_by_div[d].erase(x);
+                    auto it = nums_by_div[d].lower_bound(x);
+                    if (it != nums_by_div[d].begin()) upd_near(*prev(it));
+                }
+                ST::set_val(x, n + 1);
+            }
+            enabled[x] ^= 1;
+        } else {
+            cin >> l >> r;
+            cout << ((ST::get_min(l, r + 1) <= r) ? "YES" : "NO") << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,75 @@
+#pragma GCC optimize("Ofast,O3")
+// #pragma GCC target("avx,avx2")
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
+// using ll = int64_t;
+
+// inline int lg2(const int &x) { return 31 - __builtin_clz(x); }
+
+constexpr int mod = 1e9 + 7;
+constexpr int maxn = 200, maxlogk = 25;
+int n, m, q;
+
+vector<int> g[maxn];
+int bups[maxlogk][maxn][maxn];
+int temp_cnt_1[maxn], temp_cnt_2[maxn];
+
+void solve() {
+    cin >> n >> m >> q;
+    for (int i = 0, u, v; i < m; ++i) {
+        cin >> u >> v, --u, --v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    for (auto &bup: bups) for (auto &j: bup) for (auto &k: j) k = 0;
+    for (int v = 0; v < n; ++v) for (auto u: g[v]) bups[0][v][u] = 1;
+    for (int tpow = 1; tpow < maxlogk; ++tpow) {
+        for (int v = 0; v < n; ++v) {
+            for (int u = 0; u < n; ++u) {
+                if (bups[tpow - 1][v][u] == 0) continue;
+                for (int w = 0; w < n; ++w) {
+                    if (bups[tpow - 1][u][w] == 0) continue;
+                    bups[tpow][v][w] = (bups[tpow][v][w] + 1ll * bups[tpow - 1][v][u] * bups[tpow - 1][u][w] % mod) %
+                                       mod;
+                }
+            }
+        }
+    }
+    for (int _ = 0, qv, k; _ < q; ++_) {
+        cin >> qv >> k;
+        for (int i = 0; i < n; ++i) temp_cnt_1[i] = 0;
+        temp_cnt_1[qv - 1] = 1;
+        while (k) {
+            for (int i = 0; i < n; ++i) temp_cnt_2[i] = 0;
+            int nlev = __lg(k);
+            k -= 1 << nlev;
+            for (int v = 0; v < n; ++v) {
+                for (int u = 0; u < n; ++u) {
+                    temp_cnt_2[u] = (temp_cnt_2[u] + 1ll * temp_cnt_1[v] * bups[nlev][v][u] % mod) % mod;
+                }
+            }
+            swap(temp_cnt_1, temp_cnt_2);
+        }
+        int ans = 0;
+        for (int i = 0; i < n; ++i) ans = (ans + temp_cnt_1[i]) % mod;
+        cout << ans << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    // freopen("input.txt","r",stdin);
+    solve();
+#endif
+    return 0;
+}

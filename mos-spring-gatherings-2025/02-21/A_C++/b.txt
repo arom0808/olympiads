@@ -1,0 +1,111 @@
+#include <algorithm>
+#include <iostream>
+#include <random>
+#include <set>
+
+using namespace std;
+using ll = long long;
+
+constexpr int seed = 7478;
+mt19937 rng(seed);
+vector<pair<int, int> > color_pos[3];
+char table[5][30];
+char tcbc[3] = {'R', 'G', 'B'};
+
+int randint(int a, int b) {
+    return uniform_int_distribution<int>(a, b)(rng);
+}
+
+void init_color_pos() {
+    set<pair<int, int> > poss;
+    while (poss.size() < 60) poss.emplace(randint(0, 4), randint(0, 29));
+    vector<pair<int, int> > vp(poss.begin(), poss.end());
+    shuffle(vp.begin(), vp.end(), rng);
+    for (int i = 0; i < 3; ++i) color_pos[i].resize(20);
+    for (int i = 0; i < 20; ++i) color_pos[0][i] = vp[i];
+    for (int i = 0; i < 20; ++i) color_pos[1][i] = vp[i + 20];
+    for (int i = 0; i < 20; ++i) color_pos[2][i] = vp[i + 40];
+}
+
+bool check_table() {
+    // int min_bad_cnt = 1e9;
+    pair<int, int> bans(0, 0);
+    for (int start_shift = 0; start_shift <= 10; ++start_shift) {
+        for (int cur_shift = 0; cur_shift <= 10; ++cur_shift) {
+            for (int dvorn_pos = 0; dvorn_pos <= 31; ++dvorn_pos) {
+                bool dvorn_ok = true;
+                if (dvorn_pos != 31) {
+                    for (int i = 0; i < 5; ++i) {
+                        for (int j = dvorn_pos; j < dvorn_pos + 10; ++j) {
+                            if (j - cur_shift < 0 || j - cur_shift >= 30) continue;
+                            if (table[i][j - cur_shift] != 'W') dvorn_ok = false;
+                        }
+                    }
+                }
+                if (!dvorn_ok) continue;
+                int cnt_bad = 0, cnt_good = 0, cnt_unknown = 0;
+                for (int color = 0; color < 3; ++color) {
+                    for (auto [si,sj]: color_pos[color]) {
+                        sj += start_shift - cur_shift;
+                        if (sj < 0 || sj >= 30
+                            || (dvorn_pos != 31 && cur_shift + sj >= dvorn_pos && cur_shift + sj < dvorn_pos + 10)) {
+                            ++cnt_unknown;
+                            continue;
+                        }
+                        if (table[si][sj] != tcbc[color]) ++cnt_bad;
+                        else ++cnt_good;
+                    }
+                }
+                // if (cnt_good - cnt_bad > bans.first - bans.second) bans = make_pair(cnt_good, cnt_bad);
+                bans = std::max(bans, make_pair(cnt_good, 60 - cnt_bad));
+                // min_bad_cnt = std::min(min_bad_cnt, cnt_bad);
+            }
+        }
+    }
+    auto [cnt_good, cnt_bad] = bans;
+    cnt_bad = 60 - cnt_bad;
+    return cnt_good > cnt_bad + 2;
+}
+
+char out_table[5][30];
+
+void solve() {
+    init_color_pos();
+    for (int i = 0; i < 5; ++i) for (int j = 0; j < 30; ++j) cin >> table[i][j];
+    if (check_table()) cout << "Yes\n";
+    else {
+        cout << "No\n";
+        for (int i = 0; i < 5; ++i) for (int j = 0; j < 30; ++j) out_table[i][j] = '.';
+        for (int color = 0; color < 3; ++color) {
+            for (auto [i,j]: color_pos[color]) {
+                out_table[i][j] = tcbc[color];
+            }
+        }
+        for (int i = 0; i < 5; ++i) {
+            for (int j = 0; j < 30; ++j) {
+                cout << out_table[i][j];
+            }
+            cout << "\n";
+        }
+#ifdef LOCAL
+        cout << "\n";
+        for (int i = 0; i < 5; ++i) {
+            for (int j = 0; j < 30; ++j) {
+                if (out_table[i][j] == '.') cout << table[i][j];
+                else cout << out_table[i][j];
+            }
+            cout << "\n";
+        }
+#endif
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr), cout.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

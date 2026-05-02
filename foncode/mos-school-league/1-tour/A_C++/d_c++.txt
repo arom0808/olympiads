@@ -1,0 +1,35 @@
+#include <iostream>
+#include <cstdint>
+
+using namespace std;
+
+
+const int32_t maxn = 2e5 + 1, inf = 1e9 + 1;
+int32_t n, q;
+int32_t a[maxn];
+int32_t cnt_to_exit[maxn];
+bool used[maxn];
+
+int32_t count_exit_cnt(int32_t i) {
+    if (cnt_to_exit[i] != -1) return cnt_to_exit[i];
+    if (i + a[i] < 0 || i + a[i] >= n) return cnt_to_exit[i] = 1;
+    if (a[i] == 0 || used[i]) return cnt_to_exit[i] = inf;
+    used[i] = true;
+    cnt_to_exit[i] = count_exit_cnt(i + a[i]) + 1;
+    used[i] = false;
+    return cnt_to_exit[i];
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    cin >> n >> q;
+    for (int32_t i = 0; i < n; ++i) cin >> a[i];
+    for (int32_t i = 0; i < n; ++i) cnt_to_exit[i] = -1;
+    for (int32_t i = 0; i < n; ++i) count_exit_cnt(i);
+    for (int32_t i, k; q--;) {
+        cin >> i >> k;
+        if (k >= cnt_to_exit[i]) cout << "NO\n";
+        else cout << "YES\n";
+    }
+    return 0;
+}

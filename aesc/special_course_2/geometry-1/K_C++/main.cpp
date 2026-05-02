@@ -35,19 +35,33 @@ int64_t sign(int64_t v) {
     return 1;
 }
 
+bool inline_intersect(int64_t a, int64_t b, int64_t c, int64_t d) {
+    if (a > b) swap(a, b);
+    if (c > d) swap(c, d);
+    return std::max(a, c) <= std::min(b, d);
+}
+
 int main() {
     int64_t ax, ay, bx, by, cx, cy, dx, dy;
     cin >> ax >> ay >> bx >> by >> cx >> cy >> dx >> dy;
     Vec ab(ax, ay, bx, by), ac(ax, ay, cx, cy), ad(ax, ay, dx, dy), cd(cx, cy, dx, dy), cb(cx, cy, bx, by),
-            ca(cx, cy, ax, ay);
-    if (((ab ^ ac) < 0 && (ab ^ ad) < 0) || ((ab ^ ac) > 0 && (ab ^ ad) > 0)) {
-        cout << "NO";
-        return 0;
+            ca(cx, cy, ax, ay), bc(bx, by, cx, cy), bd(bx, by, dx, dy), ba(bx, by, ax, ay);
+    if ((ab ^ ac) == 0 && (ab ^ ad) == 0) {
+        if (inline_intersect(ax, bx, cx, dx) && inline_intersect(ay, by, cy, dy)) cout << "YES";
+        else cout << "NO";
+    } else {
+        if ((ab ^ ac) * (ab ^ ad) <= 0 && (cd ^ ca) * (cd ^ cb) <= 0) cout << "YES";
+        else cout << "NO";
     }
-    if (((cd ^ cb) < 0 && (cd ^ ca) < 0) || ((cd ^ cb) > 0 && (cd ^ ca) > 0)) {
-        cout << "NO";
-        return 0;
-    }
-    cout << "YES";
+
+//    if (((ab ^ ac) < 0 && (ab ^ ad) < 0) || ((ab ^ ac) > 0 && (ab ^ ad) > 0)) {
+//        cout << "NO";
+//        return 0;
+//    }
+//    if (((cd ^ cb) < 0 && (cd ^ ca) < 0) || ((cd ^ cb) > 0 && (cd ^ ca) > 0)) {
+//        cout << "NO";
+//        return 0;
+//    }
+//    cout << "YES";
     return 0;
 }

@@ -1,0 +1,22 @@
+def main():
+    s = open("input.txt", "r").read()
+    p = [i for i in range(len(s) - 3) if s[i:i + 4] == 'FSRQ']
+    p.append(len(s))
+    ans = 0
+    for i in range(len(p)):
+        if i + 80 < len(p):
+            cl = p[i + 80] - p[i]
+            l, r = p[i], p[i + 80]
+            if p[i + 80] != len(s):
+                cl += 3
+                r += 3
+            if i > 0:
+                cl += p[i] - p[i - 1] - 1
+                l = p[i - 1] + 1
+            if cl == 2379 and ans != 2379:
+                print(s[l:r])
+            ans = max(ans, cl)
+    print(ans)
+
+
+main()

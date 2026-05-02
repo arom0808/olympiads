@@ -1,0 +1,124 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int maxn = 1e6 + 10;
+
+int n;
+char s[maxn];
+
+vector<char> hall;
+vector<int> turns;
+vector<int> back_turns;
+
+bool go_there_l(int &sp, int cp, int r) {
+    const int wcp = cp;
+    turns.push_back(cp);
+    --cp, ++sp;
+    bool dir = false;
+    while (cp != wcp) {
+        if (cp < 0 || sp >= r) return false;
+        if (s[sp] == hall[cp]) {
+            if (!dir) {
+                turns.push_back(cp);
+                dir = !dir;
+            }
+            ++cp, ++sp;
+        } else {
+            if (dir) {
+                turns.push_back(cp);
+                dir = !dir;
+            }
+            --cp, ++sp;
+            if (cp < 0 || s[sp - 1] == hall[cp]) return false;
+        }
+    }
+    return true;
+}
+
+bool go_there_r(int &sp, int cp, int l) {
+    const int wcp = cp;
+    back_turns.push_back(cp);
+    --cp, --sp;
+    bool dir = true;
+    while (cp != wcp) {
+        if (cp < 0 || sp <= l) return false;
+        if (s[sp] != hall[cp]) {
+            if (dir) {
+                back_turns.push_back(cp);
+                dir = !dir;
+            }
+            ++cp, --sp;
+        } else {
+            if (!dir) {
+                back_turns.push_back(cp);
+                dir = !dir;
+            }
+            --cp, --sp;
+            if (cp < 0 || s[sp + 1] != hall[cp]) return false;
+        }
+    }
+    return true;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> s[i];
+    hall.clear(), turns.clear(), back_turns.clear();
+    if (n & 1) {
+        cout << "NO\n";
+        return;
+    }
+    int l = 0, r = n - 1;
+    if (s[l] == s[r]) {
+        cout << "NO\n";
+        return;
+    }
+    hall.push_back(s[l]);
+    ++l, --r;
+    int cp = 1;
+    while (l < r) {
+        if (s[l] != s[r]) {
+            hall.push_back(s[l]);
+            ++l, --r, ++cp;
+            continue;
+        }
+        if (s[l] != s[l - 1]) {
+            if (!go_there_l(l, cp, r)) {
+                cout << "NO\n";
+                return;
+            }
+        } else {
+            if (!go_there_r(r, cp, l)) {
+                cout << "NO\n";
+                return;
+            }
+        }
+    }
+    turns.push_back(hall.size());
+    turns.insert(turns.end(), back_turns.rbegin(), back_turns.rend());
+    cout << "YES\n";
+    cout << hall.size() << "\n";
+    for (auto c: hall) cout << c;
+    cout << "\n";
+    cout << turns.size() << "\n";
+    for (auto t: turns) cout << t << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    int t = 1;
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+#ifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

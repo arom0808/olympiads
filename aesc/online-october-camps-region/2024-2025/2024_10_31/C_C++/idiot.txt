@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int maxn = 1e5;
+
+namespace ST {
+    struct Node {
+        int max_val = 0;
+        Node *l = nullptr, *r = nullptr;
+    };
+
+    constexpr int max_nodes_cnt = 1e7;
+    Node tree[max_nodes_cnt];
+    int size, nodes_used = 0;
+
+    Node *get_new_node() {
+        return &tree[nodes_used++];
+    }
+
+    void upd_from_child(Node *v, int l, int r) {
+        if (r - l <= 1) return;
+        v->max_val = std::max(v->l->max_val, v->r->max_val);
+    }
+
+    Node *_build(int l, int r) {
+        if (r - l == 1) return get_new_node();
+        Node *v = get_new_node();
+        v->l = _build(l, (l + r) / 2);
+        v->r = _build((l + r) / 2, r);
+        return v;
+    }
+
+    Node *_add(Node *pre_node, int l, int r, int pos, int val) {
+        if (l >= pos + 1 || pos >= r) return pre_node;
+        if (l == pos && r == pos + 1) {
+            Node *v = get_new_node();
+            v->max_val = pre_node->max_val + val;
+            return v;
+        }
+        Node *v = get_new_node();
+        v->l = _add(pre_node->l, l, (l + r) / 2, pos, val);
+        v->r = _add(pre_node->r, (l + r) / 2, r, pos, val);
+        return v;
+    }
+
+    pair<int, int> _find_max_pos(Node *v1, Node *v2, int l, int r) {
+        if (r - l == 1) return {v2->max_val - v1->max_val, l};
+        if (v2->l->max_val - v1->l->max_val > v2->r->max_val - v1->r->max_val)
+            return _find_max_pos(v1->l, v2->l, l, (l + r) / 2);
+        return _find_max_pos(v1->r, v2->r, (l + r) / 2, r);
+    }
+
+    Node *build(int _size) {
+        size = _size;
+        return _build(0, size);
+    }
+
+    Node *add(Node *pre_root, int pos, int val) {
+        return _add(pre_root, 0, size, pos, val);
+    }
+
+    pair<int, int> find_max_pos(Node *v1, Node *v2) {
+        return _find_max_pos(v1, v2, 0, size);
+    }
+}
+
+int arr[maxn];
+int ans[maxn];
+
+int n, q;
+
+struct Que {
+    int l, r, id;
+};
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> arr[i];
+    vector<int> svals(begin(arr), next(begin(arr), n));
+    sort(svals.begin(), svals.end());
+    svals.erase(unique(svals.begin(), svals.end()), svals.end());
+    for (int i = 0; i < n; ++i) arr[i] = distance(svals.begin(), lower_bound(svals.begin(), svals.end(), arr[i]));
+    vector<ST::Node *> roots(n + 1);
+    roots[0] = ST::build(static_cast<int>(svals.size()));
+    for (int i = 0; i < n; ++i) roots[i + 1] = ST::add(roots[i], arr[i], 1);
+    cin >> q;
+    vector<Que> ques(q);
+    for (int i = 0, l, r; i < q; ++i) {
+        cin >> l >> r, --l;
+        cout << svals[ST::find_max_pos(roots[l], roots[r]).second] << "\n";
+    }
+    // for (int i = 0; i < q; ++i) cin >> ques[i].l >> ques[i].r, --ques[i].l, ques[i].id = i;
+    // for(int i =0; i < )
+    return 0;
+}

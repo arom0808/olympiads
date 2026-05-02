@@ -1,0 +1,203 @@
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int maxn = 1.5e5 + 10;
+int n, m;
+int trav[maxn];
+vector<int> timetable[maxn];
+vector<int> min_next_pos[maxn], max_next_pos[maxn];
+
+namespace ST {
+    struct Node {
+        int change = 0, min_val = 0l;
+    };
+
+    Node tree[maxn * 4];
+
+    void upd(int v) {
+        tree[v].min_val = std::min(tree[v << 1].min_val, tree[v << 1 | 1].min_val);
+    }
+
+    void _init(int v, int l, int r) {
+        if (r - l == 1) {
+            tree[v].min_val = -l - 1;
+            return;
+        }
+        int mid = (l + r) >> 1;
+        _init(v << 1, l, mid);
+        _init(v << 1 | 1, mid, r);
+        upd(v);
+    }
+
+    void init() {
+        _init(1, 0, m);
+    }
+
+    void push(int v) {
+        if (!tree[v].change) return;
+        tree[v << 1].change += tree[v].change;
+        tree[v << 1].min_val += tree[v].change;
+        tree[v << 1 | 1].change += tree[v].change;
+        tree[v << 1 | 1].min_val += tree[v].change;
+        tree[v].change = 0;
+    }
+
+    void _add(int v, int l, int r, int a, int b, int val) {
+        if (l >= b || a >= r) return;
+        if (a <= l && r <= b) {
+            tree[v].change += val;
+            tree[v].min_val += val;
+            return;
+        }
+        push(v);
+        int mid = (l + r) >> 1;
+        _add(v << 1, l, mid, a, b, val);
+        _add(v << 1 | 1, mid, r, a, b, val);
+        upd(v);
+    }
+
+    void add(int a, int b, int val) {
+        _add(1, 0, m, a, b, val);
+    }
+
+    int _find_first_neg(int v, int l, int r) {
+        if (tree[v].min_val >= 0) return r;
+        if (r - l == 1) return l;
+        push(v);
+        int mid = (l + r) >> 1;
+        if (tree[v << 1].min_val < 0) return _find_first_neg(v << 1, l, mid);
+        return _find_first_neg(v << 1 | 1, mid, r);
+    }
+
+    int find_first_neg() {
+        return _find_first_neg(1, 0, m);
+    }
+}
+
+struct MinMaxST {
+    int sz;
+    vector<int> min_tree, max_tree;
+
+    void init(const vector<int> &min_vals, const vector<int> &max_vals) {
+        sz = min_vals.size();
+        min_tree.resize(sz * 2);
+        max_tree.resize(sz * 2);
+        for (int i = 0; i < sz; ++i) min_tree[i + sz] = min_vals[i];
+        for (int i = 0; i < sz; ++i) max_tree[i + sz] = max_vals[i];
+        for (int i = sz - 1; i; --i) min_tree[i] = std::min(min_tree[i << 1], min_tree[i << 1 | 1]);
+        for (int i = sz - 1; i; --i) max_tree[i] = std::max(max_tree[i << 1], max_tree[i << 1 | 1]);
+    }
+
+    int min_val(int l, int r) const {
+        l += sz, r += sz;
+        int ans = 1e9;
+        while (l != r) {
+            if (l & 1) ans = std::min(ans, min_tree[l++]);
+            if (r & 1) ans = std::min(ans, min_tree[--r]);
+            l >>= 1, r >>= 1;
+        }
+        return ans;
+    }
+
+    int max_val(int l, int r) const {
+        l += sz, r += sz;
+        int ans = 0;
+        while (l != r) {
+            if (l & 1) ans = std::max(ans, max_tree[l++]);
+            if (r & 1) ans = std::max(ans, max_tree[--r]);
+            l >>= 1, r >>= 1;
+        }
+        return ans;
+    }
+};
+
+namespace ST2 {
+    MinMaxST tree[maxn * 4];
+    vector<int> temp_mins, temp_maxs;
+
+    void merge(const MinMaxST &a, const MinMaxST &b, MinMaxST &c) {
+        temp_mins.resize(m), temp_maxs.resize(m);
+        for (int i = 0; i < m; ++i) {
+            int l = a.min_val(i, i + 1), r = a.max_val(i, i + 1) + 1;
+            temp_mins[i] = b.min_val(l, r);
+            temp_maxs[i] = b.max_val(l, r);
+        }
+        c.init(temp_mins, temp_maxs);
+    }
+
+    void _init(int v, int l, int r) {
+        if (r - l == 1) {
+            tree[v].init(min_next_pos[l], max_next_pos[l]);
+            return;
+        }
+        int mid = (l + r) >> 1;
+        _init(v << 1, l, mid);
+        _init(v << 1 | 1, mid, r);
+        merge(tree[v << 1], tree[v << 1 | 1], tree[v]);
+    }
+
+    void init() {
+        _init(1, 0, n - 1);
+    }
+
+    pair<int, int> _get_ans(int v, int l, int r, int a, int b, pair<int, int> borders) {
+        if (a <= l && r <= b)
+            return {
+                tree[v].min_val(borders.first, borders.second + 1),
+                tree[v].max_val(borders.first, borders.second + 1)
+            };
+        int mid = (l + r) >> 1;
+        if (a < mid) borders = _get_ans(v << 1, l, mid, a, b, borders);
+        if (mid < b) borders = _get_ans(v << 1 | 1, mid, r, a, b, borders);
+        return borders;
+    }
+
+    int get_ans(int a, int b, int w) {
+        return _get_ans(1, 0, n - 1, a, b, {w, w}).second;
+    }
+}
+
+// MinMaxST seg_sts[maxn];
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i + 1 < n; ++i) cin >> trav[i];
+    for (int i = 0; i < n; ++i)
+        timetable[i].resize(m), min_next_pos[i].resize(m), max_next_pos[i].resize(m);
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) cin >> timetable[i][j];
+    for (int i = 0; i + 1 < n; ++i) {
+        ST::init();
+        for (int j = 0; j < m; ++j) {
+            min_next_pos[i][j] = lower_bound(timetable[i + 1].begin(), timetable[i + 1].end(),
+                                             timetable[i][j] + trav[i]) - timetable[i + 1].begin();
+            ST::add(min_next_pos[i][j], m, 1);
+        }
+        for (int j = 0; j < m; ++j) {
+            ST::add(min_next_pos[i][j], m, -1);
+            max_next_pos[i][j] = std::min(ST::find_first_neg(), m - 1);
+            ST::add(min_next_pos[i][j], m, 1);
+        }
+    }
+    ST2::init();
+    int q;
+    cin >> q >> q;
+    while (q--) {
+        int u, v, w;
+        cin >> u >> v >> w, --u, --v, --w;
+        cout << timetable[v][ST2::get_ans(u, v, w)] << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

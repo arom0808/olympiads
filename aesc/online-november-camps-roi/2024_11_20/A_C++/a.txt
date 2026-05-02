@@ -1,0 +1,57 @@
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+template<typename T>
+T mceil(T a, T b) {
+    return (a + b - 1) / b;
+}
+
+int table[10000][500];
+int used_cnt[500];
+int f_used_prs[500][500];
+
+void solve() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    int k_used_cnt = 0;
+    int i = 0, row_start_t = m - 1;
+    for (int j = 0, t = 0; ;) {
+        if (k_used_cnt == n) break;
+        f_used_prs[j][t] = 1;
+        table[i][j] = t + 1;
+        if (++used_cnt[j] == k) ++k_used_cnt;
+        j = (j + 1) % n;
+        if (row_start_t == t) {
+            ++i;
+            int mt = 0;
+            for (; f_used_prs[j][mt]; ++mt) {
+            }
+            t = mt;
+            row_start_t = (mt - 1 + m) % m;
+        } else t = (t + 1) % m;
+    }
+    for (int e = 0; e < n; ++e) {
+        if (table[i][e]) {
+            ++i;
+            break;
+        }
+    }
+    cout << i << "\n";
+    for (int e = 0; e < i; ++e) {
+        for (int j = 0; j < n; ++j) cout << table[e][j] << " ";
+        cout << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

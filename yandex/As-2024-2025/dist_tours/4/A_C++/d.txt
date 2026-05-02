@@ -1,0 +1,81 @@
+#include <iostream>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <cstring>
+#include <chrono>
+#include <set>
+
+using namespace std;
+
+using ll = int64_t;
+constexpr int maxn = 10;
+constexpr ll inf = 1e18;
+
+int n, m;
+int plv[maxn][2];
+bool live[maxn];
+bool team[maxn];
+
+vector<pair<int, int> > g[maxn];
+
+int rec_sol(int level = 0) {
+    if (level == n) {
+        int res = 0;
+        for (int i = 0; i < n; ++i) if (live[i]) res += plv[i][team[i]];
+        int minus_res = 0;
+        for (int v = 0; v < n; ++v) {
+            if (!live[v]) continue;
+            for (auto [u,t]: g[v]) {
+                if (!live[u]) continue;
+                if (team[v] != team[u]) minus_res += t;
+            }
+        }
+        return res - minus_res / 2;
+    }
+    team[level] = false;
+    int mr = rec_sol(level + 1);
+    if (live[level]) {
+        team[level] = true;
+        mr = std::max(mr, rec_sol(level + 1));
+    }
+    return mr;
+}
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) cin >> plv[i][0];
+    for (int i = 0; i < n; ++i) cin >> plv[i][1];
+    for (int i = 0, x, y, t; i < m; ++i) {
+        cin >> x >> y >> t, --x, --y;
+        g[x].emplace_back(y, t);
+        g[y].emplace_back(x, t);
+    }
+    int q;
+    cin >> q;
+    for (int i = 0; i < n; ++i) live[i] = true;
+    cout << rec_sol(0) << "\n";
+    for (int _ = 0, t, x; _ < q; ++_) {
+        cin >> t;
+        if (t == 2) cin >> x, live[x - 1] = false, cout << rec_sol(0) << "\n";
+        if (t == 1) cin >> x, live[x - 1] = true, cout << rec_sol(0) << "\n";
+        if (t == 3) for (int i = 0; i < n; ++i) live[i] = true;
+        if (t == 4) for (int i = 1; i <= n / 5; ++i) live[i - 1] = false;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    // freopen("input.txt","r",stdin);
+    solve();
+#endif
+    return 0;
+}

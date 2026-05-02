@@ -1,0 +1,41 @@
+#ifndef LOCAL
+#pragma GCC optimize("Ofast")
+#pragma GCC target("avx,avx2")
+#endif
+
+#include <iostream>
+#include <algorithm>
+#include <numeric>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 3e5;
+int vals[maxn], ids[maxn];
+
+void solve() {
+    int n, a;
+    cin >> n >> a;
+    for (int i = 0; i < n; ++i) cin >> vals[i];
+    iota(ids, ids + n, 0);
+    int ans = 0, min_val = *min_element(vals, vals + n);
+    do {
+        ll res = 0;
+        for (int i = 0; i + 1 < n; ++i) res += vals[ids[i]] % vals[ids[i + 1]];
+        ans += res <= min_val + a;
+    } while (next_permutation(ids, ids + n));
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    int cfmod = 0, t = 1;
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    cfmod = 1;
+#endif
+    if (cfmod) cin >> t;
+    while (t--) solve();
+    return 0;
+}

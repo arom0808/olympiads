@@ -1,0 +1,71 @@
+#include <iostream>
+
+using namespace std;
+
+constexpr int maxn = 1e5;
+
+bool check_dig(int num, int dig) {
+    for (; num; num /= 10) if (num % 10 == dig) return true;
+    return false;
+}
+
+
+int n;
+int digs[maxn];
+
+void solve() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> digs[i];
+    for (int sv = 1; sv <= 1000; ++sv) {
+        bool ok = true;
+        for (int i = 0; i < n && ok; ++i) ok = check_dig(i + sv, digs[i]);
+        if (ok) {
+            cout << sv << "\n";
+            return;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    solve();
+    return 0;
+}
+
+
+// ST clst;
+//
+// int calc_lis() {
+//     clst.init();
+//     int ans = 1;
+//     for (int i = 0; i < n; ++i) {
+//         int cc = clst.get_max(0, zip_val(vals[i])) + 1;
+//         ans = std::max(ans, cc);
+//         clst.set_val(zip_val(vals[i]), cc);
+//     }
+//     return ans;
+// }
+// if (x == 0) {
+//     cout << calc_lis() << "\n";
+//     return;
+// }
+// if (n <= 50) {
+//     int ans = 0;
+//     for (int l = 0; l < n; ++l) {
+//         for (int r = l + 1; r <= n; ++r) {
+//             for (int shift = -x; shift <= x; ++shift) {
+//                 for (int i = l; i < r; ++i) vals[i] += shift;
+//                 ans = std::max(ans, calc_lis());
+//                 for (int i = l; i < r; ++i) vals[i] -= shift;
+//             }
+//         }
+//     }
+//     cout << ans << "\n";
+//     return;
+// }

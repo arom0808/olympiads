@@ -1,0 +1,111 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+using ll = long long;
+
+constexpr ll maxn = 2e5, maxlogn = 18;
+constexpr ll inf = 1e18;
+
+ll hs[maxn], tin[maxn], tout[maxn];
+ll bup[maxn][maxlogn];
+ll bup_dist[maxn][maxlogn];
+ll par[maxn];
+vector<pair<ll, ll> > g[maxn];
+ll n;
+ll timer = 0;
+
+void dfs1(ll v, ll h, ll p, ll pw) {
+    hs[v] = h;
+    tin[v] = timer++;
+    par[v] = p;
+    if (p != -1) bup[v][0] = p, bup_dist[v][0] = pw;
+    else bup[v][0] = v, bup_dist[v][0] = 0;
+    for (ll k = 1; k < maxlogn; ++k) {
+        bup[v][k] = bup[bup[v][k - 1]][k - 1];
+        bup_dist[v][k] = bup_dist[v][k - 1] + bup_dist[bup[v][k - 1]][k - 1];
+    }
+    erase(g[v], make_pair(p, pw));
+    for (auto [u,w]: g[v]) dfs1(u, h + 1, v, w);
+    tout[v] = timer;
+}
+
+bool anc(ll a, ll b) {
+    return tin[a] <= tin[b] && tout[b] <= tout[a];
+}
+
+void up(ll &a, ll b, ll &ans) {
+    for (ll k = maxlogn - 1; k >= 0; --k) {
+        if (!anc(bup[a][k], b)) {
+            ans += bup_dist[a][k];
+            a = bup[a][k];
+        }
+    }
+}
+
+pair<ll, ll> lca(ll a, ll b) {
+    ll dist = 0;
+    up(a, b, dist);
+    up(b, a, dist);
+    if (!anc(a, b)) {
+        dist += bup_dist[a][0];
+        a = bup[a][0];
+    }
+    if (!anc(b, a)) dist += bup_dist[b][0];
+    return {a, dist};
+}
+
+bool is_on_way(ll a, ll b, ll c) {
+    auto [lv,dist] = lca(a, b);
+    return (anc(c, a) || anc(c, b)) && hs[c] > hs[lv];
+}
+
+ll try_way(ll f, ll t, ll er, ll nf, ll nt, ll w) {
+    ll ans = 0;
+    if (is_on_way(f, nf, er)) return inf;
+    ans += lca(f, nf).second;
+    ans += w;
+    if (is_on_way(nt, t, er)) return inf;
+    ans += lca(nt, t).second;
+    return ans;
+}
+
+void solve() {
+    ll s, t;
+    cin >> n >> s >> t, --s, --t;
+    for (ll i = 1, u, v, w; i < n; ++i) {
+        cin >> u >> v >> w, --u, --v;
+        g[u].emplace_back(v, w), g[v].emplace_back(u, w);
+    }
+    dfs1(0, 0, -1, 0);
+    ll q;
+    cin >> q;
+    for (ll _ = 0, a1, b1, a2, b2, c; _ < q; ++_) {
+        cin >> a1 >> b1 >> a2 >> b2 >> c, --a1, --b1, --a2, --b2;
+        if (hs[a1] < hs[b1]) swap(a1, b1);
+        if (hs[a2] < hs[b2]) swap(a2, b2);
+        if (a1 == a2 && b1 == b2) {
+            if (is_on_way(s, t, a1)) cout << lca(s, t).second - bup_dist[a1][0] + c << "\n";
+            else cout << lca(s, t).second << "\n";
+            continue;
+        }
+        ll ans = inf;
+        if (!is_on_way(s, t, a1)) ans = std::min(ans, lca(s, t).second);
+        ans = std::min(ans, try_way(s, t, a1, a2, b2, c));
+        ans = std::min(ans, try_way(s, t, a1, b2, a2, c));
+        if (ans == inf) cout << "-1\n";
+        else cout << ans << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

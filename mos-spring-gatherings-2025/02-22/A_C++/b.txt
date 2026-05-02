@@ -1,0 +1,115 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 2e5 + 10;
+ll n, R;
+
+struct PV {
+    ll x, y;
+
+    PV operator+(const PV &b) const {
+        return {x + b.x, y + b.y};
+    }
+
+    PV operator-(const PV &b) const {
+        return {x - b.x, y - b.y};
+    }
+
+    PV operator*(ll v) const {
+        return {x * v, y * v};
+    }
+};
+
+__int128_t sq_dist(const PV &a, const PV &b) {
+    const auto c = static_cast<__int128_t>(a.x - b.x);
+    const auto d = static_cast<__int128_t>(a.y - b.y);
+    return c * c + d * d;
+};
+
+struct Plane {
+    PV start, vec;
+};
+
+Plane planes[maxn];
+PV center{0, 0};
+
+bool is_in_circle(const PV &p) {
+    return sq_dist(center, p) <= static_cast<__int128_t>(R * R);
+}
+
+pair<int, int> find_time(int pid) {
+    auto [start, vec] = planes[pid];
+    int l = 0, r = 2e8;
+    while (r - l >= 3) {
+        int m1 = l + (r - l) / 3;
+        int m2 = r - (r - l) / 3;
+        if (sq_dist(center, start + vec * m1) > sq_dist(center, start + vec * m2)) l = m1;
+        else r = m2;
+    }
+    int min_t = l;
+    for (int i = l + 1; i <= r; ++i)
+        if (sq_dist(center, start + vec * i) < sq_dist(center, start + vec * min_t))
+            min_t = i;
+    if (!is_in_circle(start + vec * min_t)) return {0, 0};
+    int st, ft;
+    l = -1, r = min_t;
+    while (r - l != 1) {
+        int m = (l + r) / 2;
+        if (is_in_circle(start + vec * m)) r = m;
+        else l = m;
+    }
+    st = r;
+    l = min_t, r = 2e8;
+    while (r - l != 1) {
+        int m = (l + r) / 2;
+        if (is_in_circle(start + vec * m)) l = m;
+        else r = m;
+    }
+    ft = r;
+    return {st, ft};
+}
+
+struct Act {
+    int time, type;
+
+    bool operator<(const Act &rhs) const {
+        if (time != rhs.time) return time < rhs.time;
+        return type < rhs.type;
+    }
+};
+
+void solve() {
+    cin >> n >> R;
+    for (int i = 0; i < n; ++i) {
+        cin >> planes[i].start.x >> planes[i].start.y >> planes[i].vec.x >> planes[i].vec.y;
+        planes[i].vec = planes[i].vec - planes[i].start;
+    }
+    vector<pair<int, int> > acts;
+    for (int i = 0; i < n; ++i) {
+        auto [st, ft] = find_time(i);
+        if (st == ft) continue;
+        acts.emplace_back(st, 1);
+        acts.emplace_back(ft, 0);
+    }
+    sort(acts.begin(), acts.end());
+    int mc = 0, cc = 0;
+    for (auto [time, type]: acts) {
+        if (type) mc = std::max(mc, ++cc);
+        else --cc;
+    }
+    cout << mc << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

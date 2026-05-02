@@ -1,0 +1,91 @@
+#ifndef LOCAL
+#pragma GCC optimize("Ofast")
+#endif
+
+#include <iostream>
+
+using namespace std;
+using ll = long long;
+
+constexpr int maxn = 2e5;
+constexpr ll inf = 1e11;
+
+int n;
+// ll dp[maxn];
+
+struct ST {
+    ll global_change = 0;
+    ll tree[maxn * 2];
+
+    void add_to_all(ll val) {
+        global_change += val;
+    }
+
+    void init_inf() {
+        for (int i = 0l; i < 2 * n; ++i) tree[i] = inf;
+    }
+
+    void set_val(int pos, ll val) {
+        pos += n;
+        tree[pos] = val - global_change;
+        for (pos >>= 1; pos; pos >>= 1) tree[pos] = std::min(tree[pos << 1], tree[pos << 1 | 1]);
+    }
+
+    ll min_val(int l, int r) {
+        l += n, r += n;
+        ll ans = inf;
+        for (; l != r; l >>= 1, r >>= 1) {
+            if (l & 1) ans = std::min(ans, tree[l++]);
+            if (r & 1) ans = std::min(ans, tree[--r]);
+        }
+        return ans + global_change;
+    }
+};
+
+ST up, down, dp;
+
+void solve() {
+    cin >> n;
+    int q, x, y;
+    cin >> q >> x >> y, --x, --y;
+    up.init_inf(), down.init_inf(), dp.init_inf();
+    // for (int i = 0; i < n; ++i) dp[i] = inf;
+    int pre_t = y;
+    dp.set_val(x, 0);
+    up.set_val(x, -x);
+    down.set_val(x, x);
+    for (int _ = 0, t; _ < q; ++_) {
+        cin >> t, --t;
+        ll mdv = inf;
+        mdv = std::min(mdv, up.min_val(0, t + 1) + t);
+        mdv = std::min(mdv, down.min_val(t, n) - t);
+        // ll mdv2 = inf;
+        // for (int i = 0; i < n; ++i) mdv2 = std::min(mdv2, dp[i] + std::abs(i - t));
+        // for (int i = 0; i < n; ++i) dp[i] += std::abs(t - pre_t);
+        dp.add_to_all(std::abs(t - pre_t));
+        dp.set_val(pre_t, std::min(dp.min_val(pre_t, pre_t + 1), mdv));
+        // dp[pre_t] = std::min(dp[pre_t], mdv);
+        up.add_to_all(std::abs(t - pre_t));
+        down.add_to_all(std::abs(t - pre_t));
+        up.set_val(pre_t, dp.min_val(pre_t, pre_t + 1) - pre_t);
+        down.set_val(pre_t, dp.min_val(pre_t, pre_t + 1) + pre_t);
+        pre_t = t;
+    }
+    ll ans = inf;
+    for (int i = 0; i < n; ++i) if (dp.min_val(i, i + 1) < ans) ans = dp.min_val(i, i + 1);
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r",stdin);
+#endif
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

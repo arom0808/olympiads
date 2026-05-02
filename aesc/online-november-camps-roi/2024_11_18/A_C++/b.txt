@@ -1,0 +1,159 @@
+#pragma GCC optimize("Ofast")
+
+#include <algorithm>
+#include <iostream>
+
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int maxn = 2e5;
+int n, k;
+int arr[maxn];
+
+class ST {
+public:
+    struct Node {
+        int min_val, cnt_min_val, change;
+
+        void init() {
+            min_val = 0, cnt_min_val = 1, change = 0;
+        }
+    };
+
+    Node tree[maxn * 4];
+    int size;
+
+    void push(int v, int l, int r) {
+        if (!tree[v].change) return;
+        if (r - l > 1) {
+            tree[v * 2].min_val += tree[v].change;
+            tree[v * 2 + 1].min_val += tree[v].change;
+            tree[v * 2].change += tree[v].change;
+            tree[v * 2 + 1].change += tree[v].change;
+        }
+        tree[v].change = 0;
+    }
+
+    void upd_from_child(int v, int l, int r) {
+        if (r - l <= 1) return;
+        tree[v].min_val = tree[v * 2].min_val;
+        tree[v].cnt_min_val = tree[v * 2].cnt_min_val;
+        if (tree[v * 2 + 1].min_val < tree[v].min_val) {
+            tree[v].min_val = tree[v * 2 + 1].min_val;
+            tree[v].cnt_min_val = tree[v * 2 + 1].cnt_min_val;
+        } else if (tree[v * 2 + 1].min_val == tree[v].min_val) {
+            tree[v].cnt_min_val += tree[v * 2 + 1].cnt_min_val;
+        }
+    }
+
+    void _build(int v, int l, int r) {
+        if (r - l == 1) {
+            tree[v].init();
+            return;
+        }
+        _build(v * 2, l, (l + r) / 2);
+        _build(v * 2 + 1, (l + r) / 2, r);
+        upd_from_child(v, l, r);
+    }
+
+    int _cnt_zeros(int v, int l, int r, int a, int b) {
+        if (l >= b || a >= r) return 0;
+        if (a <= l && r <= b) return tree[v].min_val ? 0 : tree[v].cnt_min_val;
+        push(v, l, r);
+        return _cnt_zeros(v * 2, l, (l + r) / 2, a, b) + _cnt_zeros(v * 2 + 1, (l + r) / 2, r, a, b);
+    }
+
+    void _add(int v, int l, int r, int a, int b, int val) {
+        if (l >= b || a >= r) return;
+        if (a <= l && r <= b) {
+            tree[v].min_val += val;
+            tree[v].change += val;
+            return;
+        }
+        push(v, l, r);
+        _add(v * 2, l, (l + r) / 2, a, b, val);
+        _add(v * 2 + 1, (l + r) / 2, r, a, b, val);
+        upd_from_child(v, l, r);
+    }
+
+    void build() {
+        size = n;
+        _build(1, 0, size);
+    }
+
+    int cnt_zeros(int a, int b) {
+        return _cnt_zeros(1, 0, size, a, b);
+    }
+
+    void add(int a, int b, int val) {
+        _add(1, 0, size, a, b, val);
+    }
+};
+
+int temp_last_eq[maxn];
+int prev_eq[maxn];
+
+void calc_last_eq() {
+    for (int i = 0; i < n; ++i) temp_last_eq[i] = -1;
+    for (int i = 0; i < n; ++i) {
+        prev_eq[i] = temp_last_eq[arr[i]];
+        temp_last_eq[arr[i]] = i;
+    }
+}
+
+ST sts[16];
+
+void add_where_kti(int bid, int l, int r, int val) {
+    for (int i = 1; i < (1 << k); ++i)
+        if (i & (1 << bid))
+            sts[i].add(l, r, val);
+}
+
+int one_cnts(int num) {
+    int res = 0;
+    for (; num; num >>= 1) res += num & 1;
+    return res;
+}
+
+int cnt_least_one_zero(int l, int r) {
+    int res = 0;
+    for (int i = 1; i < (1 << k); ++i) {
+        if (one_cnts(i) & 1) res += sts[i].cnt_zeros(l, r);
+        else res -= sts[i].cnt_zeros(l, r);
+    }
+
+    return res;
+}
+
+void solve() {
+    cin >> n >> k;
+    for (int i = 0; i < n; ++i) cin >> arr[i], --arr[i];
+    calc_last_eq();
+    for (int i = 0; i < (1 << k); ++i) sts[i].build();
+    ll ans = 0;
+    for (int i = 0; i < n; ++i) {
+        int cpos = i;
+        for (int j = 0; j < k && cpos != -1; ++j) {
+            int ppos = prev_eq[cpos];
+            add_where_kti(j, ppos + 1, cpos + 1, 1);
+            if (ppos != -1) {
+                int dppos = prev_eq[ppos];
+                add_where_kti(j, dppos + 1, ppos + 1, -1);
+            }
+            cpos = ppos;
+        }
+        ans += i - cnt_least_one_zero(0, i + 1) + 1;
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

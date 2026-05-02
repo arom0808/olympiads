@@ -1,0 +1,141 @@
+#pragma GCC optimize("Ofast")
+
+#include <iostream>
+#include <array>
+#include <algorithm>
+#include <numeric>
+#include <random>
+#include <set>
+
+using namespace std;
+using ll = long long;
+
+constexpr int seed = 234523;
+constexpr int maxn = 105, maxm = 15;
+
+
+mt19937 rng(seed);
+
+pair<int, int> acts[maxn][maxm];
+pair<int, int> best_acts[maxn][maxm];
+int order[maxn];
+bool got[maxn];
+
+
+constexpr int n = 100, m = 10;
+constexpr double s = 80.7;
+
+uniform_int_distribution<int> to_dist(0, n - 2);
+uniform_real_distribution<double> per_dist(0, 1);
+
+int randint(int a, int b) {
+    return uniform_int_distribution<int>(a, b)(rng);
+}
+
+double get_score() {
+    constexpr int its = 5000;
+    ll free_cnt = 0;
+    for (int i = 0; i < its; ++i) {
+        shuffle(order, order + n, rng);
+        for (int j = 0; j < n; ++j) got[j] = false;
+        int cnt = 0;
+        for (int j = 0; j < n; ++j) {
+            int cid = order[j];
+            auto act = acts[cid][cnt];
+            if (act.first == cid || cnt + act.second > m) return -1;
+            if (!got[act.first]) ++free_cnt;
+            got[cid] = true;
+            cnt += act.second;
+        }
+    }
+    return std::pow(static_cast<double>(free_cnt) / (its * n) / s, 4) * 20;
+}
+
+int get_rand_to(int from) {
+    int to = to_dist(rng);
+    if (to >= from) ++to;
+    return to;
+}
+
+struct Change {
+    int di, dj, dk, cv;
+};
+
+void gen_change(Change &ch) {
+    ch.di = randint(0, n - 1);
+    ch.dj = randint(0, m);
+    ch.dk = randint(0, 1);
+    auto &dact = acts[ch.di][ch.dj];
+    int pv = ch.dk ? dact.second : dact.first;
+    int nv;
+    if (ch.dk) nv = randint(0, m - ch.dj);
+    else nv = get_rand_to(ch.di);
+    ch.cv = nv - pv;
+}
+
+void make_change(const Change &ch) {
+    auto &dact = acts[ch.di][ch.dj];
+    if (ch.dk) dact.second += ch.cv;
+    else dact.first += ch.cv;
+}
+
+void un_change(const Change &ch) {
+    auto &dact = acts[ch.di][ch.dj];
+    if (ch.dk) dact.second -= ch.cv;
+    else dact.first -= ch.cv;
+}
+
+void solve() {
+    iota(order, order + n, 0);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j <= m; ++j) {
+            acts[i][j].first = get_rand_to(i);
+            acts[i][j].second = randint(0, m - j);
+        }
+    }
+    double t = 1;
+    double score = get_score();
+    double best_score = score;
+    for (int i = 0; i < n; ++i) for (int j = 0; j <= m; ++j) best_acts[i][j] = acts[i][j];
+    Change changes[10];
+    for (int it = 0, z_it = 0; it < 100000; ++it, ++z_it) {
+        if (z_it == 10000) {
+            z_it = 0;
+            t = 1;
+        }
+        t *= 0.991;
+        int ccnt = randint(1, 30);
+        for (int i = 0; i < ccnt; ++i) gen_change(changes[i]), make_change(changes[i]);
+        // int di = randint(0, n - 1), dj = randint(0, m), dk = randint(0, 1);
+        // auto &dact = acts[di][dj];
+        // int pv = dk ? dact.second : dact.first;
+        // if (dk) dact.second = randint(0, m - dj);
+        // else dact.first = get_rand_to(di);
+        double new_score = get_score();
+        if (new_score > best_score) {
+            best_score = score;
+            for (int i = 0; i < n; ++i) for (int j = 0; j <= m; ++j) best_acts[i][j] = acts[i][j];
+            cout << "Score: " << best_score << "\n";
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j <= m; ++j) cout << best_acts[i][j].first + 1 << " " << best_acts[i][j].second << " ";
+                cout << "\n";
+            }
+            cout.flush();
+        }
+        if (new_score > score || per_dist(rng) < exp((new_score - score) / t)) {
+            score = new_score;
+        } else {
+            for (int i = ccnt - 1; i >= 0; --i) un_change(changes[i]);
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

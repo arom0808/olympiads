@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+using ll = int64_t;
+
+constexpr ll maxn = 100000, mod = 1e9 + 7;
+ll n;
+vector<ll> g[4];
+ll dp[maxn + 1][4];
+
+void solve() {
+    cin >> n;
+    for (ll i = 0; i < 4; ++i) {
+        for (ll j = 0, c; j < 4; ++j) {
+            cin >> c;
+            if (c) g[j].push_back(i);
+        }
+    }
+    for (ll i = 0; i < 4; ++i) dp[1][i] = 1;
+    for (ll i = 1; i < n; ++i) {
+        for (ll j = 0; j < 4; ++j) {
+            for (auto k: g[j]) {
+                dp[i + 1][k] += dp[i][j];
+                dp[i + 1][j] %= mod;
+            }
+        }
+    }
+    ll ans = 0;
+    for (ll i = 0; i < 4; ++i) ans = (ans + dp[n][i]) % mod;
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

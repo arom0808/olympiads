@@ -1,0 +1,48 @@
+#include <iostream>
+
+using namespace std;
+
+const int maxn = 4e6;
+pair<int, int> tree[maxn]; //count of lists
+constexpr int mod = 1e9 + 7;
+
+void ch_grow(int v) {
+    if (tree[v].first == 1) {
+        tree[v * 2] = {1, 1ll * v * 2 % mod};
+        tree[v * 2 + 1] = {1, (1ll * v * 2 + 1) % mod};
+        tree[v] = {3, (1ll * v * 5 + 1) % mod};
+        return;
+    }
+    ch_grow(v * 2), ch_grow(v * 2 + 1);
+    tree[v] = {
+        tree[v * 2].first + tree[v * 2 + 1].first + 1, (1ll * tree[v * 2].second + tree[v * 2 + 1].second + v) % mod
+    };
+}
+
+void p_grow(int v) {
+    while (v) {
+        tree[v] = {
+            tree[v * 2].first + tree[v * 2 + 1].first + 1, (1ll * tree[v * 2].second + tree[v * 2 + 1].second + v) % mod
+        };
+        v >>= 1;
+    }
+}
+
+void grow(int v) {
+    ch_grow(v);
+    p_grow(v);
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+    int m;
+    cin >> m;
+    string temp_str;
+    tree[1] = {1, 1};
+    for (int i = 0, v; i < m; ++i) {
+        cin >> temp_str >> v;
+        if (temp_str == "Grow") grow(v);
+        else cout << tree[v].second << "\n";
+    }
+    return 0;
+}

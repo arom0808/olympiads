@@ -1,0 +1,40 @@
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+using ll = long long;
+
+int arr[5];
+
+void masha() {
+    for (int i = 0; i < 5; ++i) cin >> arr[i];
+    --(*min_element(arr, arr + 5));
+    for (int i = 0; i < 5; ++i) cout << arr[i] << " ";
+    cout << "\n";
+}
+
+void valya() {
+    for (int i = 0; i < 5; ++i) cin >> arr[i];
+    ++(*min_element(arr, arr + 5));
+    for (int i = 0; i < 5; ++i) cout << arr[i] << " ";
+    cout << "\n";
+}
+
+void solve() {
+    string type;
+    cin >> type;
+    if (type == "Masha") masha();
+    else valya();
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#elifdef TEST
+    freopen("input.txt", "r", stdin);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,64 @@
+#pragma GCC optimize("Ofast")
+
+#include <iostream>
+
+using namespace std;
+using ll = int64_t;
+constexpr int maxk = 1000;
+int k, n;
+int studs[maxk];
+int dp[maxk + 1][2][maxk + 1];
+
+int iceil(int a, int b) {
+    return (a + b - 1) / b;
+}
+
+void solve() {
+    cin >> n >> k;
+    for (int i = 0; i < k; ++i) cin >> studs[i], --studs[i];
+    for (int i = 0; i <= k; ++i) for (int j = 0; j < 2; ++j) for (int t = 0; t <= k; ++t) dp[i][j][t] = 2000;
+    dp[k][0][0] = 0;
+    for (int t = 1; t <= iceil(n - studs[k - 1], 2) && t <= k; ++t) dp[k][1][t] = t - 1;
+    for (int t = 1; t <= iceil(n - studs[k - 1] - 1, 2) && t <= k; ++t) dp[k][0][t] = t;
+    for (int i = k - 1; i > 0; --i) {
+        for (int j1 = 0; j1 < 2; ++j1) {
+            for (int j2 = 0; j2 < 2; ++j2) {
+                if (studs[i] - studs[i - 1] == 1 && j1 && j2) continue;
+                for (int t = 0; t <= k; ++t) {
+                    if (t < j1 + j2) continue;
+                    int cdist = std::max<int>(0, studs[i] - studs[i - 1] - 1 - j1 - j2);
+                    int mcnt = iceil(cdist, 2);
+                    for (int c1 = std::min(t - j1 - j2, mcnt); c1 >= 0; --c1) {
+                        int cv = dp[i + 1][j2][t - j1 - c1];
+                        dp[i][j1][t] = std::min(dp[i][j1][t], cv + c1);
+                        if (cv > 1000 && t - j1 - c1 != 0) break;
+                    }
+                }
+            }
+        }
+    }
+    if (studs[0] == 0) {
+        dp[0][0][k] = dp[1][0][k];
+        dp[0][1][k] = dp[1][1][k];
+    } else {
+        for (int j2 = 0; j2 < 2; ++j2) {
+            int t = k;
+            int mcnt = std::max<int>(0, iceil(studs[0] - j2, 2));
+            for (int c1 = 0; c1 <= mcnt; ++c1) {
+                if (t - j2 - c1 < 0) break;
+                dp[0][0][t] = std::min(dp[0][0][t], dp[1][j2][t - c1] + c1);
+            }
+        }
+    }
+    cout << std::min(dp[0][0][k], dp[0][1][k]) << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    solve();
+    return 0;
+}

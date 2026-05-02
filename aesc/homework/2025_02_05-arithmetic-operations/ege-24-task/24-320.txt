@@ -1,0 +1,39 @@
+def is_sq(x):
+    l, r = 0, x + 1
+    while r - l != 1:
+        mid = (l + r) >> 1
+        if mid * mid <= x:
+            l = mid
+        else:
+            r = mid
+    return l * l == x
+
+
+def check_ok_len(s):
+    ok = False
+    for c in s:
+        if len(c) == 10 and is_sq(sum(map(int, list(c)))):
+            ok = True
+            break
+    if ok:
+        return sum(map(len, s))
+    return -1
+
+
+def main():
+    s = open("input.txt", "r").read().split('=')
+    s = [(s[i // 2] if (i & 1) else '=') for i in range(1, len(s) * 2)]
+    s = [v for v in s if v != '']
+    s = [(v if v != '=' or i + 1 == len(s) or s[i + 1] != '=' else 'A')
+         for i, v in enumerate(s) if i == 0 or v != '=' or s[i - 1] != '=']
+    start = 0
+    ans = 0
+    for i in range(len(s)):
+        if s[i] == 'A':
+            ans = max(ans, check_ok_len(s[start:i]))
+            start = i + 1
+    ans = max(ans, check_ok_len(s[start:]))
+    print(ans)
+
+
+main()

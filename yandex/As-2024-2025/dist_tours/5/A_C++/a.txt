@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <list>
+#include <numeric>
+#include <algorithm>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace __gnu_pbds;
+using namespace std;
+using ll = int64_t;
+
+template<typename T>
+using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+
+constexpr int maxn = 2e5;
+int n;
+list<int> gc[maxn];
+ordered_set<int> num_sets[maxn];
+ll ans[maxn];
+int hs[maxn];
+
+int cnt_bigger(const ordered_set<int> &oms, int val) {
+    return oms.size() - oms.order_of_key(val + 1);
+}
+
+int cnt_lower(const ordered_set<int> &oms, int val) {
+    return oms.order_of_key(val);
+}
+
+ll inv_cnt(ordered_set<int> &a, ordered_set<int> &b) {
+    ll res = 0;
+    if (a.size() < b.size()) {
+        for (auto val: a) res += cnt_lower(b, val);
+    } else {
+        for (auto val: b) res += cnt_bigger(a, val);
+    }
+    return res;
+}
+
+void dfs1(int v, int h) {
+    hs[v] = h;
+    for (auto u: gc[v]) dfs1(u, h + 1);
+}
+
+void proc_v(int v) {
+    if (gc[v].empty()) {
+        ans[v] = 0;
+        num_sets[v].insert(v);
+        return;
+    }
+    for (auto u: gc[v]) ans[v] += ans[u];
+    auto m_it = gc[v].begin();
+    for (auto it = gc[v].begin(); it != gc[v].end(); ++it) if (num_sets[*it].size() > num_sets[*m_it].size()) m_it = it;
+    auto &cns = num_sets[*m_it];
+    while (gc[v].size() > 1) {
+        if (m_it != gc[v].begin()) {
+            ans[v] += inv_cnt(num_sets[*prev(m_it)], cns);
+            for (auto val: num_sets[*prev(m_it)]) cns.insert(val);
+            num_sets[*prev(m_it)].clear();
+            gc[v].erase(prev(m_it));
+        } else {
+            ans[v] += inv_cnt(cns, num_sets[*next(m_it)]);
+            for (auto val: num_sets[*next(m_it)]) cns.insert(val);
+            num_sets[*next(m_it)].clear();
+            gc[v].erase(next(m_it));
+        }
+    }
+    ans[v] += cnt_lower(cns, v);
+    num_sets[v].swap(cns);
+    num_sets[v].insert(v);
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 0, k; i < n; ++i) {
+        cin >> k;
+        gc[i].resize(k);
+        for (auto &el: gc[i]) cin >> el, --el;
+    }
+    dfs1(0, 0);
+    vector<int> gorder(n);
+    iota(gorder.begin(), gorder.end(), 0);
+    sort(gorder.begin(), gorder.end(), [](int a, int b) {
+        return hs[a] > hs[b];
+    });
+    for (auto v: gorder) proc_v(v);
+    for (int i = 0; i < n; ++i) cout << ans[i] << " ";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

@@ -1,0 +1,97 @@
+#include <algorithm>
+#include <iostream>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+const int maxn = 1e3;
+int n, m;
+int lords[maxn][maxn];
+int g_v_id[maxn][maxn];
+vector<int> g[maxn * maxn];
+int sizes[maxn * maxn];
+int lord_id[maxn * maxn];
+int used[maxn * maxn];
+int used_timer = 0;
+int32_t g_size = 0;
+int ans = 0;
+
+void g_v_dfs(int i, int j, int v_id, int lord_id) {
+    if (g_v_id[i][j] != -1 || lords[i][j] != lord_id) return;
+    g_v_id[i][j] = v_id;
+    ++sizes[v_id];
+    for (int di = -1; di <= 1; ++di)
+        for (int dj = di ? 0 : -1; dj <= 1; dj += 2)
+            if (int ni = i + di, nj = j + dj;
+                ni >= 0 && ni < n && nj >= 0 && nj < m)
+                g_v_dfs(ni, nj, v_id, lord_id);
+}
+
+void g_dfs(int i, int j) {
+    for (int di = -1; di <= 1; ++di)
+        for (int dj = di ? 0 : -1; dj <= 1; dj += 2)
+            if (int ni = i + di, nj = j + dj;
+                ni >= 0 && ni < n && nj >= 0 && nj < m && g_v_id[i][j] != g_v_id[ni][nj])
+                g[g_v_id[i][j]].push_back(g_v_id[ni][nj]);
+}
+
+int check_lords_dfs(int v, int l1, int l2) {
+    if (used[v] == used_timer || (lord_id[v] != l1 && lord_id[v] != l2)) return 0;
+    used[v] = used_timer;
+    int tans = sizes[v];
+    for (auto u: g[v]) tans += check_lords_dfs(u, l1, l2);
+    return tans;
+}
+
+void check_this_lords(int lord1, int lord2) {
+    ++used_timer;
+    for (int i = 0; i < g_size; ++i)
+        ans = std::max(ans, check_lords_dfs(i, lord1, lord2));
+}
+
+void solve() {
+    cin >> n >> m;
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) cin >> lords[i][j], g_v_id[i][j] = -1;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            if (g_v_id[i][j] == -1)
+                lord_id[g_size] = lords[i][j],
+                        g_v_dfs(i, j, g_size++, lords[i][j]),
+                        ans = std::max(ans, sizes[g_size - 1]);
+    for (int i = 0; i < n; ++i) for (int j = 0; j < m; ++j) g_dfs(i, j);
+    for (int i = 0; i < g_size; ++i)
+        sort(g[i].begin(), g[i].end()), g[i].erase(unique(g[i].begin(), g[i].end()), g[i].end());
+    vector<int> all_lord_ids(g_size);
+    for (int i = 0; i < g_size; ++i) all_lord_ids[i] = lord_id[i];
+    sort(all_lord_ids.begin(), all_lord_ids.end());
+    all_lord_ids.erase(unique(all_lord_ids.begin(), all_lord_ids.end()), all_lord_ids.end());
+    for (int i = 0; i < g_size; ++i)
+        lord_id[i] = distance(all_lord_ids.begin(),
+                              lower_bound(all_lord_ids.begin(), all_lord_ids.end(), lord_id[i]));
+    set<pair<int, int> > used_lords_pairs;
+    for (int first_v = 0; first_v < g_size; ++first_v) {
+        for (auto second_v: g[first_v]) {
+            auto t_p = make_pair(lord_id[first_v], lord_id[second_v]);
+            if (t_p.first > t_p.second) swap(t_p.first, t_p.second);
+            if (used_lords_pairs.contains(t_p)) continue;
+            used_lords_pairs.insert(t_p);
+            check_this_lords(t_p.first, t_p.second);
+        }
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    int t;
+    cin >> t;
+    while (t--) solve();
+#else
+    solve();
+#endif
+    return 0;
+}

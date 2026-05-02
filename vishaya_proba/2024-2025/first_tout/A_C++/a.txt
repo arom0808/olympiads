@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <random>
+#include <numeric>
+#include <algorithm>
+
+using namespace std;
+using ll = int64_t;
+
+mt19937 rng(2358933);
+
+int randint(int a, int b) {
+    return uniform_int_distribution<int>(a, b)(rng);
+}
+
+constexpr int maxn = 1e5;
+int arr[maxn];
+int n, k;
+
+ll path_from_to(int i, int j) {
+    if (i <= j) return j - i;
+    return n - i + j;
+}
+
+ll my_ans() {
+    ll ans = path_from_to(0, arr[0]), full_text_len = 0;
+    for (int i = 0; i < n; ++i) full_text_len += path_from_to(i > 0 ? arr[i - 1] : arr[n - 1], arr[i]);
+    ans += k / n * full_text_len;
+    if (k % n == 0) ans -= path_from_to(arr[n - 1], arr[0]);
+    else {
+        k -= k / n * n;
+        for (int i = 1; i < k; ++i) ans += path_from_to(arr[i - 1], arr[i]);
+    }
+    return ans;
+}
+
+ll st_ans() {
+    ll ans = path_from_to(0, arr[0]), full_text_len = 0;
+    for (int i = 1; i < k; ++i) ans += path_from_to(arr[(i - 1) % n], arr[i % n]);
+    return ans;
+}
+
+void solve() {
+    cin >> n >> k;
+    for (int i = 0; i < n; ++i) cin >> arr[i], --arr[i];
+    cout << my_ans();
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    // while (true) {
+    //     n = randint(1, 5);
+    //     k = randint(1, 10);
+    //     iota(begin(arr), next(begin(arr), n), 0);
+    //     shuffle(begin(arr), next(begin(arr), n), rng);
+    //     if (my_ans() != st_ans()) {
+    //         cout << n << " " << k << "\n";
+    //         for (int i = 0; i < n; ++i) cout << arr[i] << "\n";
+    //         cout << "\n\n";
+    //         cout << my_ans() << "\n" << st_ans() << "\n";
+    //         return 0;
+    //     }
+    // }
+    solve();
+    return 0;
+}

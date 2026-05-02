@@ -1,0 +1,84 @@
+//#pragma GCC optimize("Ofast")
+//#pragma GCC optimize(O3)
+//#pragma GCC target("sse,sse2,sse3,ssse3,sse4,sse4.1,sse4.2,popcnt,abm,mmx,avx,avx2,tune=native")
+//#pragma GCC optimize("unroll-loops")
+//#pragma GCC optimize("unswitch-loops")
+//#pragma GCC optimize("function-sections")
+//#pragma GCC optimize("inline")
+
+#include <iostream>
+#include <vector>
+#include <cstdint>
+#include <set>
+#include <list>
+
+using namespace std;
+
+bool dfs(const vector<list<int32_t>> &g, vector<int32_t> &rm, vector<int32_t> &used, int32_t timer, int32_t v) {
+    if (used[v] == timer) return false;
+    used[v] = timer;
+    for (auto u: g[v]) {
+        if (rm[u] == -1) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    for (auto u: g[v]) {
+        if (dfs(g, rm, used, timer, rm[u])) {
+            rm[u] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
+void sol() {
+    int32_t k, n;
+    cin >> k >> n;
+    vector<list<int32_t>> g(n);
+    for (auto &el: g) {
+        int32_t s, temp;
+        cin >> s;
+        for (int32_t i = 0; i < s; ++i) {
+            cin >> temp;
+            el.push_back(temp - 1);
+        }
+    }
+    vector<int32_t> rm(k * n, -1), used(n, -1);
+    int32_t timer = 0, hours_cnt = 1;
+    for (;; ++hours_cnt) {
+        int32_t ans = 0;
+        for (int32_t v = 0; v < n; ++v) {
+            if (dfs(g, rm, used, timer, v)) {
+                ++ans;
+                ++timer;
+            }
+        }
+        if (ans >= n) break;
+        for (auto &el: g) {
+            vector<uint32_t> rr(el.size() / hours_cnt);
+            auto start = el.begin(), end = next(el.begin(), el.size() / hours_cnt);
+            uint32_t i = 0;
+            for (auto it = el.begin(); it != end; ++it) rr[i++] = (*it) + hours_cnt * k;
+            for (auto jj: rr) el.push_back(jj);
+        }
+        ++timer;
+        for (auto &el: rm) el = -1;
+    }
+    cout << hours_cnt << "\n";
+    vector<pair<int32_t, int32_t>> res;
+    for (uint32_t i = 0; i < hours_cnt; ++i) {
+        res.clear();
+        for (uint32_t j = i * k; j < (i + 1) * k; ++j) if (rm[j] != -1) res.emplace_back(rm[j], j % k);
+        cout << res.size() << "\n";
+        for (auto el: res) cout << el.first + 1 << " " << el.second + 1 << "\n";
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false), cin.tie(nullptr), cout.tie(nullptr);
+    int32_t t;
+    cin >> t;
+    while (t--) sol();
+    return 0;
+}

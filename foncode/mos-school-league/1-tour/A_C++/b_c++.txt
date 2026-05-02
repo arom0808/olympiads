@@ -1,0 +1,26 @@
+#include <array>
+#include <iostream>
+#include <cstdint>
+
+using namespace std;
+
+array<bool, 10> used_digits;
+
+bool is_all_digits_dif(int32_t n) {
+    used_digits.fill(false);
+    while (n) {
+        if (used_digits[n % 10]) return false;
+        used_digits[n % 10] = true;
+        n /= 10;
+    }
+    return true;
+}
+
+int main() {
+    int32_t n;
+    cin >> n;
+    ++n;
+    while (!is_all_digits_dif(n)) ++n;
+    cout << n;
+    return 0;
+}

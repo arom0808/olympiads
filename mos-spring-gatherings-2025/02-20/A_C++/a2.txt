@@ -1,0 +1,127 @@
+
+#include <iostream>
+#include <array>
+#include <algorithm>
+#include <vector>
+#include <set>
+
+using namespace std;
+using ll = long long;
+
+constexpr ll maxm = 1e5 + 10;
+
+// struct Line {
+//     ll k, b;
+//
+//     Line() = default;
+//
+//     ll operator()(ll x) const {
+//         return k * x + b;
+//     }
+// };
+//
+// struct LiChao {
+//     vector<Line> lines;
+//     vector<bool> disabled;
+//
+//     struct Node {
+//         Line line;
+//         int l = -1, r = -1;
+//     };
+//
+//     vector<Node> tree;
+//     int root;
+//
+//     int get_new_node() {
+//         tree.emplace_back();
+//         return tree.size() - 1;
+//     }
+//
+//     void init() {
+//         tree.clear();
+//         root = get_new_node();
+//     }
+//
+//     void _insert(int v, int l, int r, Line line) {
+//         int mid =
+//     }
+// };
+
+ll m;
+ll n;
+pair<ll, ll> flows[maxm];
+bool got[maxm];
+
+void make_spec_group() {
+    set<pair<ll, ll> > ss;
+    for (int i = 0; i < m; ++i) ss.emplace(flows[i].first, i);
+    ll ans = 0;
+    for (ll i = 0; i < n; ++i) {
+        auto max_id = prev(ss.end())->second;
+        if (got[max_id]) {
+            ans += (n - i) * flows[max_id].second;
+            i = n;
+        } else {
+            ss.erase(prev(ss.end()));
+            ss.emplace(flows[i].second, i);
+            ans += flows[max_id].first;
+            got[max_id] = true;
+        }
+    }
+    cout << ans << "\n";
+}
+
+void solve() {
+    cin >> n >> m;
+    ll ans = 0;
+    for (ll i = 0; i < m; ++i) cin >> flows[i].first >> flows[i].second;
+    bool spec_group = true;
+    for (ll i = 0; i < m; ++i) if (flows[i].first < flows[i].second) spec_group = false;
+    if (spec_group) {
+        make_spec_group();
+        return;
+    }
+    array<pair<ll, ll>, 3> temp_max;
+    for (ll i = 0; i < n; ++i) {
+        pair<ll, ll> max_add;
+        temp_max.fill({0, 0});
+        for (ll j = 0; j < m; ++j) {
+            if (!got[j]) {
+                max_add = std::max(max_add, make_pair(flows[j].first + flows[j].second * (n - i - 1), j));
+                if (n - i - 2 >= 0)
+                    temp_max[0] = {flows[j].first + 1ll * flows[j].second * (n - i - 2), j};
+            } else {
+                max_add = std::max(max_add, make_pair(flows[j].second * (n - i), j));
+                if (n - i - 1 >= 0)
+                    temp_max[0] = {flows[j].second * (n - i - 1), j};
+            }
+            sort(temp_max.begin(), temp_max.end());
+        }
+        for (ll j = 0; j < m; ++j) {
+            if (!got[j]) {
+                if (temp_max[2].second != j)
+                    max_add = std::max(max_add, make_pair(flows[j].first + temp_max[2].first, j));
+                else max_add = std::max(max_add, make_pair(flows[j].first + temp_max[1].first, j));
+            }
+        }
+        int max_id = max_add.second;
+        if (got[max_id]) {
+            ans += (n - i) * flows[max_id].second;
+            i = n;
+        } else {
+            ans += flows[max_id].first;
+            got[max_id] = true;
+        }
+    }
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false), cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r",stdin);
+    freopen("output.txt", "w",stdout);
+#endif
+    solve();
+    return 0;
+}

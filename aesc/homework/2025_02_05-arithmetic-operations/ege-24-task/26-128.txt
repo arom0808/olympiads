@@ -1,0 +1,22 @@
+def main():
+    f = open("input.txt", "r")
+    n = int(f.readline().rstrip("\n"))
+    acts = [(b, a) for a, b in map(lambda x: map(int, x.split(" ")), f.readlines())]
+    acts.sort()
+    now_border, pre_border = 0, 0
+    cnt = 0
+    for i in range(len(acts)):
+        b, a = acts[i]
+        if a >= now_border:
+            cnt += 1
+            pre_border = now_border
+            now_border = b
+    maxb = 0
+    for i in range(len(acts)):
+        b, a = acts[i]
+        if a >= pre_border:
+            maxb = max(maxb, b)
+    print(cnt, maxb)
+
+
+main()
